@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StoryBook - Confirm Ticket</title>
+    <link rel="shortcut icon" href="./assests/images/logo.png" type="image/x-icon">
+    <meta name="description" content="Confirm your StoryBook ticket with your details to enter the magical realm.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cormorant+Garamond:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="./dist/output.css">
+</head>
+
+<body class="m-0 p-0 w-full h-screen overflow-hidden font-cormorant">
+
+    <!-- Auto-redirect if already authenticated (Remember Me) -->
+    <script>
+        fetch('/api/session', { cache: 'no-store' })
+            .then((r) => r.json())
+            .then((data) => {
+                if (data && data.authenticated) window.location.replace('./storybook.html');
+            })
+            .catch(() => {}); // stay on login page if check fails
+    </script>
+
+    <!-- Click-to-start overlay (needed for browser autoplay policy) -->
+    <div id="audioOverlay"
+        class="fixed inset-0 z-[200] flex flex-col items-center justify-center gap-5 cursor-pointer backdrop-blur-xl animate-overlay-pulse">
+        <span
+            class="font-cinzel text-4xl md:text-5xl font-bold text-[#f5d2c0] tracking-[8px] uppercase animate-text-pulse"
+            style="text-shadow: 0 0 30px rgba(255,180,100,0.3);">
+            Enter the Realm
+        </span>
+        <span class="font-cormorant text-base text-[rgba(200,180,160,0.7)] tracking-[3px]">
+            click anywhere to continue
+        </span>
+    </div>
+
+    <!-- Background Music -->
+    <audio id="bgMusic" loop preload="auto">
+        <source src="./assests/qr-bg-music.mp3" type="audio/mpeg">
+    </audio>
+
+    <!-- Sound Toggle -->
+    <button id="soundToggle" title="Toggle Music" aria-label="Mute background music"
+        class="fixed bottom-5 right-5 z-[100] w-12 h-12 rounded-full bg-black/60 border border-[rgba(255,200,150,0.3)] text-[#f5d2c0] text-xl cursor-pointer flex items-center justify-center backdrop-blur-lg transition-all duration-300 hover:bg-[rgba(100,60,60,0.6)] hover:border-[rgba(255,200,150,0.6)] hover:scale-110">
+            <svg  id="soundIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                            stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z" />
+            </svg>
+    </button>
+
+    <!-- ===== Main Fullscreen Container ===== -->
+    <div class="relative w-full h-full overflow-hidden">
+
+        <!-- Castle Background — FULLSCREEN on desktop, cropped on mobile -->
+        <img src="./assests/images/dracula-castle.png" alt="Castle" id="castleBg"
+            class="absolute inset-0 w-full h-full object-cover object-center pointer-events-none select-none">
+
+        <!-- Black Blur Overlay on top of castle -->
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-[2px] pointer-events-none z-[2]"></div>
+
+        <!-- Floating Particles -->
+        <div class="absolute inset-0 z-[3] pointer-events-none overflow-hidden" id="particles"></div>
+
+        <!-- ===== Form Content ===== -->
+        <div class="relative z-10 w-full h-full flex items-center justify-center px-4">
+
+            <div class="w-full max-w-[650px] mx-auto flex flex-col items-center gap-6">
+
+                <!-- Heading -->
+                <h1 id="pageHeading"
+                    class="w-full font-cinzel font-bold text-3xl md:text-[2.8rem] text-white uppercase tracking-[5px] text-center mb-4 animate-title-glow"
+                    style="text-shadow: 0 0 20px rgba(255,200,100,0.25), 0 2px 8px rgba(0,0,0,0.6);">
+                    Confirm Ticket
+                </h1>
+
+                <form id="ticketForm" autocomplete="off" class="w-full flex flex-col gap-8">
+
+                    <!-- Name -->
+                    <div class="flex items-center gap-5 w-full">
+                        <label for="nameInput"
+                            class="font-cinzel font-bold text-lg md:text-xl text-white min-w-[120px] md:min-w-[140px] text-right whitespace-nowrap"
+                            style="text-shadow: 0 2px 6px rgba(0,0,0,0.5);">
+                            Name:
+                        </label>
+                        <input type="text" id="nameInput" name="name" placeholder="eg: John Doe" required
+                            class="input-pink flex-1 py-3.5 px-6 font-cormorant text-lg text-[#3a2a2a] border-none rounded-full outline-none backdrop-blur-sm transition-all duration-300 shadow-md focus:scale-[1.02]">
+                    </div>
+
+                    <!-- Roll no -->
+                    <div class="flex items-center gap-5 w-full">
+                        <label for="rollInput"
+                            class="font-cinzel font-bold text-lg md:text-xl text-white min-w-[120px] md:min-w-[140px] text-right whitespace-nowrap"
+                            style="text-shadow: 0 2px 6px rgba(0,0,0,0.5);">
+                            Roll no:
+                        </label>
+                        <input type="text" id="rollInput" name="rollno" placeholder="eg: 30" required
+                            class="input-pink flex-1 py-3.5 px-6 font-cormorant text-lg text-[#3a2a2a] border-none rounded-full outline-none backdrop-blur-sm transition-all duration-300 shadow-md focus:scale-[1.02]">
+                    </div>
+
+                    <!-- Class/Sec -->
+                    <div class="flex items-center gap-5 w-full">
+                        <label for="classInput"
+                            class="font-cinzel font-bold text-lg md:text-xl text-white min-w-[120px] md:min-w-[140px] text-right whitespace-nowrap"
+                            style="text-shadow: 0 2px 6px rgba(0,0,0,0.5);">
+                            Class/Sec:
+                        </label>
+                        <input type="text" id="classInput" name="classsec" placeholder="eg: 6E" required
+                            class="input-pink flex-1 py-3.5 px-6 font-cormorant text-lg text-[#3a2a2a] border-none rounded-full outline-none backdrop-blur-sm transition-all duration-300 shadow-md focus:scale-[1.02]">
+                    </div>
+
+                    <!-- Code -->
+                    <div class="flex items-center gap-5 w-full">
+                        <label for="codeInput"
+                            class="font-cinzel font-bold text-lg md:text-xl text-white min-w-[120px] md:min-w-[140px] text-right whitespace-nowrap"
+                            style="text-shadow: 0 2px 6px rgba(0,0,0,0.5);">
+                            Code:
+                        </label>
+                        <input type="text" id="codeInput" name="code" placeholder="eg: AB9*******" required
+                            class="input-pink flex-1 py-3.5 px-6 font-cormorant text-lg text-[#3a2a2a] border-none rounded-full outline-none backdrop-blur-sm transition-all duration-300 shadow-md focus:scale-[1.02]">
+                    </div>
+
+                    <p class="text-center text-[12px] md:text-sm text-[rgba(255,240,230,0.75)] tracking-[1px] -mt-3">
+                        Accounts are created by the admin. Use the details shared with you.
+                    </p>
+
+                    <p id="formError"
+                        class="hidden text-center text-sm md:text-base font-cormorant text-red-200 bg-red-950/30 border border-red-300/20 rounded-lg px-4 py-3">
+                    </p>
+
+                    <div class="flex items-center justify-center gap-3 -mt-3">
+                        <input id="rememberMe" type="checkbox"
+                            class="h-4 w-4 accent-[#f5d2c0] cursor-pointer">
+                        <label for="rememberMe" class="text-sm text-[rgba(255,240,230,0.75)] cursor-pointer">
+                            Remember me on this device
+                        </label>
+                    </div>
+
+                    <!-- Submit -->
+                    <div class="flex justify-center mt-2">
+                        <button type="submit" id="submitBtn"
+                            class="btn-confirm py-3.5 px-14 font-cinzel font-bold text-lg text-white border-2 border-[rgba(255,200,150,0.3)] rounded-lg cursor-pointer tracking-[3px] uppercase transition-all duration-400 shadow-lg hover:-translate-y-0.5 hover:border-[rgba(255,200,150,0.5)] active:translate-y-0 active:shadow-md">
+                            Confirm
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="./script.js"></script>
+
+</body>
+
+</html>

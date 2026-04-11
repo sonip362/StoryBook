@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StoryBook</title>
+    <link rel="shortcut icon" href="./assests/images/logo.png" type="image/x-icon">
+   <link rel="stylesheet" href="./dist/output.css">
+</head>
+<body>
+    <script>
+        // Server-side auth is enforced, but this improves UX on refresh/back/forward.
+        fetch('/api/session', { cache: 'no-store' })
+            .then((r) => r.json())
+            .then((data) => {
+                if (!data || !data.authenticated) window.location.replace('./qr-login.html');
+            })
+            .catch(() => window.location.replace('./qr-login.html'));
+    </script>
+    <!-- Background Music -->
+    <audio id="bgMusic" loop preload="auto">
+        <source src="./assests/qr-bg-music.mp3" type="audio/mpeg">
+    </audio>
+
+    <!-- Header -->
+    <header id="storyHeader" class="fixed top-0 left-0 right-0 z-[150] flex items-center px-5 py-4" style="background: rgba(15, 10, 5, 0.85); border-bottom: 1px solid rgba(245, 210, 192, 0.2); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);">
+        <!-- Easter Egg Counter (left) -->
+        <div id="eggCounter" class="flex items-center gap-2" title="Easter Eggs Found">
+            <!-- Egg icon -->
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:20px;height:20px;color:#f5d2c0;filter:drop-shadow(0 0 6px rgba(255,180,100,0.55));">
+                <path d="M12 2C8.686 2 5 6.477 5 11.5 5 16.747 8.134 22 12 22s7-5.253 7-10.5C19 6.477 15.314 2 12 2z"/>
+            </svg>
+            <span id="eggCountText" style="font-family:'Cinzel',serif;font-size:0.82rem;letter-spacing:2px;color:#f5d2c0;text-shadow:0 0 10px rgba(255,180,100,0.5);">
+                — / —
+            </span>
+        </div>
+    </header>
+
+    <!-- Sound Toggle -->
+    <button id="soundToggle" title="Toggle Music" aria-label="Mute background music"
+        class="fixed bottom-5 right-5 z-[100] w-12 h-12 rounded-full bg-black/60 border border-[rgba(255,200,150,0.3)] text-[#f5d2c0] text-xl cursor-pointer flex items-center justify-center backdrop-blur-lg transition-all duration-300 hover:bg-[rgba(100,60,60,0.6)] hover:border-[rgba(255,200,150,0.6)] hover:scale-110">
+            <svg id="soundIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                            stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z" />
+            </svg>
+    </button>
+
+    <div class="page">
+        <div class="scroll-container">
+            <div class="scroll-image-container">
+                <img class="scroll-image" src="./assests/images/storybook.png" alt="Storybook">
+                <button class="title-hotspot" type="button" aria-label="Hidden title hotspot"></button>
+                <div class="content-wrapper">
+                    <img class="castle-image" src="./assests/images/dracula-castle-bg.png" alt="Dracula Castle">
+                    <p class="castle-text">Lorem ipsum dolor sit amet consectetur adipisicing elit. Ex, quis et. Voluptatibus suscipit eos rem eum sint distinctio qui voluptas ea id mollitia, pariatur debitis sunt quidem omnis iste illo accusamus fugiat at ad necessitatibus aliquam quisquam quo? Et voluptatibus beatae sunt eum sequi harum dolor nostrum accusantium ad veniam?</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script src="./script.js"></script>
+
+  
+</body>
+</html>
