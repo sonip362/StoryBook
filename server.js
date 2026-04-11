@@ -233,6 +233,7 @@ app.post('/api/easter-eggs/unlock', async (req, res) => {
   }
 });
 
+// Protected Storybook route
 app.get('/storybook.html', (req, res) => {
   getSessionUser(req)
     .then((user) => {
@@ -242,8 +243,18 @@ app.get('/storybook.html', (req, res) => {
     .catch(() => res.redirect('/qr-login.html'));
 });
 
-// Static assets (keep after protected routes so `/storybook.html` can't bypass auth)
-app.use(express.static(path.join(__dirname)));
+// Static assets (at the bottom to ensure /storybook.html is protected first)
+// Added explicit MIME types and used process.cwd() for Render compatibility
+app.use(express.static(path.join(process.cwd()), {
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.js')) {
+      res.setHeader('Content-Type', 'application/javascript');
+    }
+    if (filePath.endsWith('.css')) {
+      res.setHeader('Content-Type', 'text/css');
+    }
+  }
+}));
 
 app.listen(PORT, () => {
   console.log(`StoryBook server running at http://localhost:${PORT}`);
