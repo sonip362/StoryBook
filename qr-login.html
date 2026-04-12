@@ -15,7 +15,7 @@
     <link rel="stylesheet" href="./dist/output.css">
 </head>
 
-<body class="m-0 p-0 w-full h-screen overflow-hidden font-cormorant">
+<body class="m-0 p-0 w-full min-h-screen font-cormorant bg-black">
 
     <!-- Auto-redirect if already authenticated (Remember Me) -->
     <script>
@@ -31,11 +31,11 @@
     <div id="audioOverlay"
         class="fixed inset-0 z-[200] flex flex-col items-center justify-center gap-5 cursor-pointer backdrop-blur-xl animate-overlay-pulse">
         <span
-            class="font-cinzel text-4xl md:text-5xl font-bold text-[#f5d2c0] tracking-[8px] uppercase animate-text-pulse"
+            class="font-cinzel text-3xl md:text-5xl font-bold text-[#f5d2c0] tracking-[4px] md:tracking-[8px] uppercase text-center animate-text-pulse px-4"
             style="text-shadow: 0 0 30px rgba(255,180,100,0.3);">
             Enter the Realm
         </span>
-        <span class="font-cormorant text-base text-[rgba(200,180,160,0.7)] tracking-[3px]">
+        <span class="font-cormorant text-sm md:text-base text-[rgba(200,180,160,0.7)] tracking-[2px] md:tracking-[3px] text-center">
             click anywhere to continue
         </span>
     </div>
@@ -56,74 +56,72 @@
     </button>
 
     <!-- ===== Main Fullscreen Container ===== -->
-    <div class="relative w-full h-full overflow-hidden">
+    <div class="relative w-full min-h-screen min-h-[100dvh]">
 
-        <!-- Castle Background — FULLSCREEN on desktop, cropped on mobile -->
         <img src="./assests/images/dracula-castle.png" alt="Castle" id="castleBg"
-            class="absolute inset-0 w-full h-full object-cover object-center pointer-events-none select-none">
+            class="fixed inset-0 w-full h-full object-cover object-center pointer-events-none select-none">
 
         <!-- Black Blur Overlay on top of castle -->
-        <div class="absolute inset-0 bg-black/60 backdrop-blur-[2px] pointer-events-none z-[2]"></div>
+        <div class="fixed inset-0 bg-black/60 backdrop-blur-[2px] pointer-events-none z-[2]"></div>
 
         <!-- Floating Particles -->
-        <div class="absolute inset-0 z-[3] pointer-events-none overflow-hidden" id="particles"></div>
+        <div class="fixed inset-0 z-[3] pointer-events-none overflow-hidden" id="particles"></div>
 
         <!-- ===== Form Content ===== -->
-        <div class="relative z-10 w-full h-full flex items-center justify-center px-4">
-
-            <div class="w-full max-w-[650px] mx-auto flex flex-col items-center gap-6">
+        <div class="relative z-10 w-full min-h-screen min-h-[100dvh] flex items-center justify-center px-4 py-4">
+            <div class="w-full max-w-[550px] mx-auto flex flex-col items-center gap-3 md:gap-6">
 
                 <!-- Heading -->
                 <h1 id="pageHeading"
-                    class="w-full font-cinzel font-bold text-3xl md:text-[2.8rem] text-white uppercase tracking-[5px] text-center mb-4 animate-title-glow"
+                    class="w-full font-cinzel font-bold text-xl md:text-[2.8rem] text-white uppercase tracking-[3px] md:tracking-[5px] text-center mb-2 md:mb-4 animate-title-glow"
                     style="text-shadow: 0 0 20px rgba(255,200,100,0.25), 0 2px 8px rgba(0,0,0,0.6);">
                     Confirm Ticket
                 </h1>
 
-                <form id="ticketForm" autocomplete="off" class="w-full flex flex-col gap-8">
+                <form id="ticketForm" autocomplete="off" class="w-full flex flex-col gap-4 md:gap-8">
 
                     <!-- Name -->
-                    <div class="flex items-center gap-5 w-full">
+                    <div class="flex flex-col md:flex-row items-start md:items-center gap-1 md:gap-5 w-full">
                         <label for="nameInput"
-                            class="font-cinzel font-bold text-lg md:text-xl text-white min-w-[120px] md:min-w-[140px] text-right whitespace-nowrap"
+                            class="font-cinzel font-bold text-base md:text-xl text-white md:min-w-[140px] text-left md:text-right whitespace-nowrap"
                             style="text-shadow: 0 2px 6px rgba(0,0,0,0.5);">
                             Name:
                         </label>
                         <input type="text" id="nameInput" name="name" placeholder="eg: John Doe" required
-                            class="input-pink flex-1 py-3.5 px-6 font-cormorant text-lg text-[#3a2a2a] border-none rounded-full outline-none backdrop-blur-sm transition-all duration-300 shadow-md focus:scale-[1.02]">
+                            class="input-pink w-full md:flex-1 py-2.5 md:py-3.5 px-6 font-cormorant text-lg text-[#3a2a2a] border-none rounded-full outline-none backdrop-blur-sm transition-all duration-300 shadow-md focus:scale-[1.02]">
                     </div>
 
                     <!-- Roll no -->
-                    <div class="flex items-center gap-5 w-full">
+                    <div class="flex flex-col md:flex-row items-start md:items-center gap-1 md:gap-5 w-full">
                         <label for="rollInput"
-                            class="font-cinzel font-bold text-lg md:text-xl text-white min-w-[120px] md:min-w-[140px] text-right whitespace-nowrap"
+                            class="font-cinzel font-bold text-base md:text-xl text-white md:min-w-[140px] text-left md:text-right whitespace-nowrap"
                             style="text-shadow: 0 2px 6px rgba(0,0,0,0.5);">
                             Roll no:
                         </label>
                         <input type="text" id="rollInput" name="rollno" placeholder="eg: 30" required
-                            class="input-pink flex-1 py-3.5 px-6 font-cormorant text-lg text-[#3a2a2a] border-none rounded-full outline-none backdrop-blur-sm transition-all duration-300 shadow-md focus:scale-[1.02]">
+                            class="input-pink w-full md:flex-1 py-2.5 md:py-3.5 px-6 font-cormorant text-lg text-[#3a2a2a] border-none rounded-full outline-none backdrop-blur-sm transition-all duration-300 shadow-md focus:scale-[1.02]">
                     </div>
 
                     <!-- Class/Sec -->
-                    <div class="flex items-center gap-5 w-full">
+                    <div class="flex flex-col md:flex-row items-start md:items-center gap-1 md:gap-5 w-full">
                         <label for="classInput"
-                            class="font-cinzel font-bold text-lg md:text-xl text-white min-w-[120px] md:min-w-[140px] text-right whitespace-nowrap"
+                            class="font-cinzel font-bold text-base md:text-xl text-white md:min-w-[140px] text-left md:text-right whitespace-nowrap"
                             style="text-shadow: 0 2px 6px rgba(0,0,0,0.5);">
                             Class/Sec:
                         </label>
                         <input type="text" id="classInput" name="classsec" placeholder="eg: 6E" required
-                            class="input-pink flex-1 py-3.5 px-6 font-cormorant text-lg text-[#3a2a2a] border-none rounded-full outline-none backdrop-blur-sm transition-all duration-300 shadow-md focus:scale-[1.02]">
+                            class="input-pink w-full md:flex-1 py-2.5 md:py-3.5 px-6 font-cormorant text-lg text-[#3a2a2a] border-none rounded-full outline-none backdrop-blur-sm transition-all duration-300 shadow-md focus:scale-[1.02]">
                     </div>
 
                     <!-- Code -->
-                    <div class="flex items-center gap-5 w-full">
+                    <div class="flex flex-col md:flex-row items-start md:items-center gap-1 md:gap-5 w-full">
                         <label for="codeInput"
-                            class="font-cinzel font-bold text-lg md:text-xl text-white min-w-[120px] md:min-w-[140px] text-right whitespace-nowrap"
+                            class="font-cinzel font-bold text-base md:text-xl text-white md:min-w-[140px] text-left md:text-right whitespace-nowrap"
                             style="text-shadow: 0 2px 6px rgba(0,0,0,0.5);">
                             Code:
                         </label>
                         <input type="text" id="codeInput" name="code" placeholder="eg: AB9*******" required
-                            class="input-pink flex-1 py-3.5 px-6 font-cormorant text-lg text-[#3a2a2a] border-none rounded-full outline-none backdrop-blur-sm transition-all duration-300 shadow-md focus:scale-[1.02]">
+                            class="input-pink w-full md:flex-1 py-2.5 md:py-3.5 px-6 font-cormorant text-lg text-[#3a2a2a] border-none rounded-full outline-none backdrop-blur-sm transition-all duration-300 shadow-md focus:scale-[1.02]">
                     </div>
 
                     <p class="text-center text-[12px] md:text-sm text-[rgba(255,240,230,0.75)] tracking-[1px] -mt-3">
@@ -143,9 +141,9 @@
                     </div>
 
                     <!-- Submit -->
-                    <div class="flex justify-center mt-2">
+                    <div class="flex justify-center mt-1 md:mt-2">
                         <button type="submit" id="submitBtn"
-                            class="btn-confirm py-3.5 px-14 font-cinzel font-bold text-lg text-white border-2 border-[rgba(255,200,150,0.3)] rounded-lg cursor-pointer tracking-[3px] uppercase transition-all duration-400 shadow-lg hover:-translate-y-0.5 hover:border-[rgba(255,200,150,0.5)] active:translate-y-0 active:shadow-md">
+                            class="btn-confirm py-2.5 md:py-3.5 px-10 md:px-14 font-cinzel font-bold text-base md:text-lg text-white border-2 border-[rgba(255,200,150,0.3)] rounded-lg cursor-pointer tracking-[2px] md:tracking-[3px] uppercase transition-all duration-400 shadow-lg hover:-translate-y-0.5 hover:border-[rgba(255,200,150,0.5)] active:translate-y-0 active:shadow-md">
                             Confirm
                         </button>
                     </div>

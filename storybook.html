@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>StoryBook</title>
     <link rel="shortcut icon" href="./assests/images/logo.png" type="image/x-icon">
-   <link rel="stylesheet" href="./dist/output.css">
+    <link rel="stylesheet" href="./dist/output.css">
 </head>
+
 <body>
     <script>
         // Server-side auth is enforced, but this improves UX on refresh/back/forward.
@@ -23,14 +25,18 @@
     </audio>
 
     <!-- Header -->
-    <header id="storyHeader" class="fixed top-0 left-0 right-0 z-[150] flex items-center px-5 py-4" style="background: rgba(15, 10, 5, 0.85); border-bottom: 1px solid rgba(245, 210, 192, 0.2); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);">
+    <header id="storyHeader"
+        class="fixed top-0 left-0 right-0 z-[150] flex items-center px-5 py-4 transition-all duration-500"
+        style="background: rgba(15, 10, 5, 0.85); border-bottom: 1px solid rgba(245, 210, 192, 0.2); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);">
         <!-- Easter Egg Counter (left) -->
         <div id="eggCounter" class="flex items-center gap-2" title="Easter Eggs Found">
             <!-- Egg icon -->
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:20px;height:20px;color:#f5d2c0;filter:drop-shadow(0 0 6px rgba(255,180,100,0.55));">
-                <path d="M12 2C8.686 2 5 6.477 5 11.5 5 16.747 8.134 22 12 22s7-5.253 7-10.5C19 6.477 15.314 2 12 2z"/>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                style="width:20px;height:20px;color:#f5d2c0;filter:drop-shadow(0 0 6px rgba(255,180,100,0.55));">
+                <path d="M12 2C8.686 2 5 6.477 5 11.5 5 16.747 8.134 22 12 22s7-5.253 7-10.5C19 6.477 15.314 2 12 2z" />
             </svg>
-            <span id="eggCountText" style="font-family:'Cinzel',serif;font-size:0.82rem;letter-spacing:2px;color:#f5d2c0;text-shadow:0 0 10px rgba(255,180,100,0.5);">
+            <span id="eggCountText"
+                style="font-family:'Cinzel',serif;font-size:0.82rem;letter-spacing:2px;color:#f5d2c0;text-shadow:0 0 10px rgba(255,180,100,0.5);">
                 — / —
             </span>
         </div>
@@ -39,12 +45,18 @@
     <!-- Sound Toggle -->
     <button id="soundToggle" title="Toggle Music" aria-label="Mute background music"
         class="fixed bottom-5 right-5 z-[100] w-12 h-12 rounded-full bg-black/60 border border-[rgba(255,200,150,0.3)] text-[#f5d2c0] text-xl cursor-pointer flex items-center justify-center backdrop-blur-lg transition-all duration-300 hover:bg-[rgba(100,60,60,0.6)] hover:border-[rgba(255,200,150,0.6)] hover:scale-110">
-            <svg id="soundIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                            stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z" />
-            </svg>
+        <svg id="soundIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+            stroke="currentColor" class="w-6 h-6">
+            <path stroke-linecap="round" stroke-linejoin="round"
+                d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z" />
+        </svg>
     </button>
+
+    <!-- Page Indicator -->
+    <div id="pageIndicator"
+        class="fixed bottom-5 left-5 z-[100] px-4 py-2 rounded-full bg-black/60 border border-[rgba(245,210,192,0.3)] text-[#f5d2c0] font-cinzel text-[10px] tracking-[0.3em] backdrop-blur-md transition-all duration-300 pointer-events-none uppercase shadow-2xl">
+        Page 1
+    </div>
 
     <div class="page">
         <div class="scroll-container">
@@ -52,15 +64,65 @@
                 <img class="scroll-image" src="./assests/images/storybook.png" alt="Storybook">
                 <button class="title-hotspot" type="button" aria-label="Hidden title hotspot"></button>
                 <div class="content-wrapper">
-                    <img class="castle-image" src="./assests/images/dracula-castle-bg.png" alt="Dracula Castle">
-                    <p class="castle-text">Lorem ipsum dolor sit amet consectetur adipisicing elit. Ex, quis et. Voluptatibus suscipit eos rem eum sint distinctio qui voluptas ea id mollitia, pariatur debitis sunt quidem omnis iste illo accusamus fugiat at ad necessitatibus aliquam quisquam quo? Et voluptatibus beatae sunt eum sequi harum dolor nostrum accusantium ad veniam?</p>
+                    <!-- Castle Section -->
+                    <div class="castle-section" style="overflow: hidden;">
+                        <img class="castle-image" src="./assests/images/dracula-castle-bg.png" alt="Dracula Castle">
+                        <p class="castle-text">Lorem ipsum dolor sit amet consectetur adipisicing elit. Fuga, eius
+                            maiores ducimus commodi autem praesentium minus aliquam vero deserunt accusantium excepturi
+                            voluptatibus? Molestias consequatur voluptatibus cumque suscipit, sit harum, eos ea, eaque
+                            aut nostrum optio dolore a ex? Tempora facere doloribus recusandae quaerat voluptates ad
+                            nisi amet minus voluptas corrupti.</p>
+                    </div>
+
+                    <!-- Dracula Section -->
+                    <div class="dracula-section" style="clear: both; margin-top: 70px; overflow: hidden;">
+                        <div id="draculaContainer" class="dracula-container">
+                            <img id="draculaImg" src="./assests/images/dracula.png" alt="Dracula" class="dracula-image">
+                        </div>
+                        <p class="castle-text" style="text-indent: 0; padding-top: 100px;">
+                            Lorem ipsum dolor sit amet consectetur adipisicing elit. Fuga, eius maiores ducimus
+                            commodi autem praesentium minus aliquam vero deserunt accusantium excepturi voluptatibus?
+                            Molestias consequatur voluptatibus cumque suscipit, sit harum, eos ea, eaque aut nostrum
+                            optio dolore a ex? Tempora facere doloribus recusandae quaerat voluptates ad nisi amet
+                            minus voluptas corrupti. Lorem ipsum dolor sit amet consectetur adipisicing elit. Fuga,
+                            eius maiores ducimus commodi autem praesentium minus aliquam vero deserunt accusantium
+                            excepturi voluptatibus? Molestias consequatur voluptatibus cumque suscipit, sit harum, eos
+                            ea, eaque aut nostrum optio dolore a ex? Tempora facere doloribus recusandae quaerat
+                            voluptates ad nisi amet minus voluptas corrupti.
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-<script src="./script.js"></script>
+    <!-- Dracula Video Popup Modal (White Premium) -->
+    <div id="videoModal" class="fixed inset-0 z-[300] hidden bg-black/30 backdrop-blur-md transition-all duration-500">
+        <div id="modalContent"
+            class="modal-content-base w-[92vw] max-w-[480px] aspect-[9/16] md:aspect-[4/5] bg-white rounded-[40px] p-2 shadow-[0_35px_80px_-15px_rgba(0,0,0,0.5)] border-[8px] border-white">
+            <div class="relative w-full h-full rounded-[32px] overflow-hidden bg-gray-100">
+                <video id="modalVideo" class="w-full h-full object-cover" playsinline>
+                    <source src="./assests/images/dracula.mp4" type="video/mp4">
+                </video>
+                <!-- Close Button -->
+                <button id="closeModal" title="Close"
+                    class="absolute top-4 right-4 w-10 h-10 flex items-center justify-center rounded-full bg-white/90 text-black shadow-xl hover:bg-red-50 hover:scale-110 transition-all duration-300 cursor-pointer z-[310]">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3"
+                        stroke="currentColor" class="w-5 h-5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <!-- Decorative Premium Shine -->
+            <div
+                class="absolute inset-0 pointer-events-none rounded-[40px] border border-white/20 shadow-[inset_0_0_20px_rgba(255,255,255,0.5)]">
+            </div>
+        </div>
+    </div>
 
-  
+    <script src="./script.js"></script>
+
+
 </body>
+
 </html>

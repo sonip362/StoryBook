@@ -1,3 +1,13 @@
+// Replace with your actual Render URL
+const RENDER_URL = "https://storybook-jfps.onrender.com/ping";
+
+// This "pings" Render immediately to wake it up while the user reads
+window.onload = () => {
+  console.log("Waking up the dragon (Render)...");
+  fetch(RENDER_URL, { mode: 'no-cors' })
+    .then(() => console.log("Render is warming up!"))
+    .catch(err => console.log("Ping sent."));
+};
 // ===== Background Music Controller =====
 const bgMusic = document.getElementById('bgMusic');
 const soundToggle = document.getElementById('soundToggle');
@@ -34,15 +44,15 @@ if (soundToggle && bgMusic) {
   soundToggle.addEventListener('click', () => {
     isMuted = !isMuted;
     bgMusic.muted = isMuted;
-    
+
     // If music was blocked by autoplay, try to play it now on user gesture
     if (!isMuted && bgMusic.paused) {
       bgMusic.play().catch((err) => console.log('Audio play failed on toggle:', err));
     }
-    
+
     soundToggle.innerHTML = isMuted ? soundIconOff : soundIconOn;
     soundToggle.setAttribute('aria-label', isMuted ? 'Unmute background music' : 'Mute background music');
-    
+
     // Sync state for next page or refresh
     sessionStorage.setItem('musicMuted', String(isMuted));
     sessionStorage.setItem('musicPlaying', String(!bgMusic.paused));
@@ -190,6 +200,61 @@ document.querySelectorAll('#ticketForm > div').forEach((row, i) => {
   }, 400 + i * 150);
 });
 
+// ===== Mobile Header Scroll Logic (storybook.html) =====
+const storyHeader = document.getElementById('storyHeader');
+const scrollPage = document.querySelector('.page');
+
+if (storyHeader && scrollPage) {
+  const handleScroll = () => {
+    const scrollTop = scrollPage.scrollTop;
+    const scrollHeight = scrollPage.scrollHeight - scrollPage.clientHeight;
+
+    // Update Page Indicator (all devices)
+    const pageIndicator = document.getElementById('pageIndicator');
+    if (pageIndicator) {
+      if (scrollHeight <= 0) {
+        pageIndicator.textContent = 'PAGE 1';
+      } else {
+        const scrollPct = (scrollTop / scrollPage.clientHeight) * 100;
+        const pageNum = Math.max(1, Math.ceil(scrollPct / 50));
+        pageIndicator.textContent = `PAGE ${pageNum}`;
+      }
+    }
+
+    // Standard behavior for desktop
+    if (window.innerWidth > 768) {
+      storyHeader.style.opacity = '1';
+      storyHeader.style.transform = 'translateY(0)';
+      storyHeader.style.pointerEvents = 'auto';
+      return;
+    }
+
+    // Scroll detection for mobile
+    if (scrollHeight <= 0) {
+      storyHeader.style.opacity = '1';
+      storyHeader.style.transform = 'translateY(0)';
+      return;
+    }
+
+    const scrollPercent = (scrollTop / scrollHeight) * 100;
+
+    if (scrollPercent >= 15) {
+      storyHeader.style.opacity = '1';
+      storyHeader.style.transform = 'translateY(0)';
+      storyHeader.style.pointerEvents = 'auto';
+    } else {
+      storyHeader.style.opacity = '0';
+      storyHeader.style.transform = 'translateY(-100%)';
+      storyHeader.style.pointerEvents = 'none';
+    }
+  };
+
+  scrollPage.addEventListener('scroll', handleScroll, { passive: true });
+  window.addEventListener('resize', handleScroll);
+  // Initial check
+  handleScroll();
+}
+
 // ===== Storybook Page Logic =====
 const castleImage = document.querySelector('.castle-image');
 const titleHotspot = document.querySelector('.title-hotspot');
@@ -322,5 +387,93 @@ if (titleHotspot) {
   titleHotspot.addEventListener('pointerleave', clearHoldTimer);
   titleHotspot.addEventListener('pointercancel', clearHoldTimer);
   titleHotspot.addEventListener('contextmenu', (event) => event.preventDefault());
+}
+
+// ===== Dracula Tap-Hold-Tap Easter Egg =====
+const draculaImg = document.getElementById('draculaImg');
+const videoModal = document.getElementById('videoModal');
+const modalContent = document.getElementById('modalContent');
+const modalVideo = document.getElementById('modalVideo');
+const closeModal = document.getElementById('closeModal');
+
+let comboState = 0; // 0: Idle, 1: Tapped once, 2: Held successfully
+let draculaHoldStart = 0;
+let draculaHoldTimer = null;
+
+const resetDraculaCombo = () => {
+  comboState = 0;
+  if (draculaImg) draculaImg.style.transform = '';
+};
+
+// Function to close modal
+const closeDraculaModal = () => {
+  if (videoModal && modalContent && modalVideo) {
+    modalContent.classList.remove('modal-show');
+    // Wait for animation to finish before hiding container
+    setTimeout(() => {
+      videoModal.classList.add('hidden');
+      videoModal.classList.remove('flex');
+      modalVideo.pause();
+      modalVideo.currentTime = 0;
+    }, 500);
+  }
+};
+
+if (draculaImg && videoModal && modalContent && modalVideo) {
+  draculaImg.addEventListener('pointerdown', (e) => {
+    draculaHoldStart = Date.now();
+    if (comboState === 1) {
+      draculaHoldTimer = setTimeout(() => {
+        comboState = 2;
+        draculaImg.style.transform = 'scale(0.92) rotate(3deg)';
+      }, 1000);
+    }
+  });
+
+  draculaImg.addEventListener('pointerup', (e) => {
+    const duration = Date.now() - draculaHoldStart;
+    if (draculaHoldTimer) clearTimeout(draculaHoldTimer);
+
+    if (duration < 300) {
+      if (comboState === 0) {
+        comboState = 1;
+        draculaImg.style.transform = 'scale(1.1)';
+        setTimeout(() => { if (comboState === 1) resetDraculaCombo(); }, 2500);
+      } else if (comboState === 2) {
+        // Trigger Popup Modal
+        videoModal.classList.remove('hidden');
+        videoModal.classList.add('flex');
+        // Small delay to ensure browser triggers transition
+        requestAnimationFrame(() => {
+          modalContent.classList.add('modal-show');
+        });
+        modalVideo.play();
+        unlockEasterEgg('dracula_gesture_tap_hold_tap');
+        resetDraculaCombo();
+      } else {
+        resetDraculaCombo();
+      }
+    } else if (duration >= 1000 && comboState === 2) {
+      draculaImg.style.transform = 'scale(1.15) rotate(-3deg)';
+      setTimeout(() => { if (comboState === 2) resetDraculaCombo(); }, 2500);
+    } else {
+      resetDraculaCombo();
+    }
+  });
+
+  draculaImg.addEventListener('contextmenu', (e) => e.preventDefault());
+
+  // Close button logic
+  if (closeModal) {
+    closeModal.addEventListener('click', closeDraculaModal);
+  }
+
+  // Close modal when video ends
+  modalVideo.onended = closeDraculaModal;
+
+  // Close modal when clicking outside content area
+  videoModal.addEventListener('click', (e) => {
+    if (e.target === videoModal) closeDraculaModal();
+  });
 }
 

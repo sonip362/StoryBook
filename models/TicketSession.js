@@ -2,13 +2,13 @@ const mongoose = require('mongoose');
 
 const ticketSessionSchema = new mongoose.Schema(
   {
-    sessionId: { type: String, required: true, unique: true, index: true },
+    sessionId: { type: String, required: true, unique: true },
     user: {
       name: { type: String, required: true },
       rollNo: { type: Number, required: true },
       classSec: { type: String, required: true }
     },
-    expiresAt: { type: Date, required: true, index: true }
+    expiresAt: { type: Date, required: true }
   },
   { timestamps: true }
 );

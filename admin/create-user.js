@@ -16,7 +16,6 @@ const normalizeString = (value) => String(value || '').trim();
 const normalizeClassSec = (value) => normalizeString(value).toUpperCase().replace(/\s+/g, '');
 const normalizeAccessCode = (value) => normalizeString(value).toLowerCase().replace(/\s+/g, '');
 
-const generateAccessCode = () => crypto.randomBytes(6).toString('base64url').slice(0, 8);
 
 const getMongoUri = () => process.env.MONGODB_URI || process.env['MONGODB-URL'] || '';
 
@@ -24,11 +23,11 @@ const main = async () => {
   const name = normalizeString(readArg('--name'));
   const rollNoRaw = normalizeString(readArg('--rollNo'));
   const classSec = normalizeClassSec(readArg('--classSec'));
-  const accessCode = normalizeString(readArg('--accessCode')) || generateAccessCode();
-  const accessCodeNormalized = normalizeAccessCode(accessCode);
+  const accessCode = normalizeString(readArg('--accessCode'));
+  const accessCodeNormalized = accessCode ? normalizeAccessCode(accessCode) : null;
 
-  if (!name || !rollNoRaw || !classSec) {
-    console.log('Usage: node admin/create-user.js --name "John Doe" --rollNo 38 --classSec 6E [--accessCode AB9x7zK2]');
+  if (!name || !rollNoRaw || !classSec || !accessCode) {
+    console.log('Usage: node admin/create-user.js --name "John Doe" --rollNo 38 --classSec 6E --accessCode AB9x7zK2');
     process.exit(1);
   }
 

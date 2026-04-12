@@ -2,6 +2,7 @@ const express = require('express');
 const path = require('path');
 const crypto = require('crypto');
 const mongoose = require('mongoose');
+const cors = require('cors');
 require('dotenv').config();
 
 const TicketUser = require('./models/TicketUser');
@@ -74,7 +75,24 @@ const getUserQueryFromSession = (sessionUser) => ({
   classSecNormalized: normalizeClassSec(sessionUser.classSec)
 });
 
-// Middleware
+// Middleware — CORS for GitHub Pages ↔ Render cross-origin requests
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, curl, etc.)
+    if (!origin) return callback(null, true);
+    const allowed = [
+      /\.github\.io$/,          // Any GitHub Pages subdomain
+      /localhost/,              // Local development
+      /127\.0\.0\.1/,           // Local development
+      /onrender\.com$/          // Render-to-Render (same backend)
+    ];
+    if (allowed.some(pattern => pattern.test(origin))) {
+      return callback(null, true);
+    }
+    callback(new Error('CORS not allowed'));
+  },
+  credentials: true                // Allow cookies (sb_session) cross-origin
+}));
 app.use(express.json({ limit: '1mb' }));
 
 // DB
@@ -98,6 +116,11 @@ app.get('/api/health', (_req, res) => {
     status: 'ok',
     database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
   });
+});
+
+// Lightweight ping for Loading Shield (wakes Render from cold start)
+app.get('/ping', (_req, res) => {
+  res.json({ status: 'awake' });
 });
 
 app.get('/api/session', (req, res) => {
@@ -158,6 +181,55 @@ app.post('/api/ticket/verify', async (req, res) => {
   } catch (err) {
     console.error('Verify error:', err);
     return res.status(500).json({ ok: false, error: 'Server error.' });
+  }
+});
+
+app.post('/api/admin/create-user', async (req, res) => {
+  try {
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({ ok: false, error: 'Database not connected.' });
+    }
+
+    const { name, rollNo, classSec, accessCode } = req.body || {};
+
+    if (!name || !rollNo || !classSec || !accessCode) {
+      return res.status(400).json({ ok: false, error: 'All fields (name, roll no, class, access code) are required.' });
+    }
+
+    const rollNoNum = Number(rollNo);
+    if (!Number.isFinite(rollNoNum)) {
+      return res.status(400).json({ ok: false, error: 'Roll No must be a number.' });
+    }
+
+    const classSecNormalized = normalizeClassSec(classSec);
+    const accessCodeNormalized = normalizeAccessCode(accessCode);
+
+    // Check for duplicates
+    const existingUser = await TicketUser.findOne({
+      $or: [
+        { rollNo: rollNoNum, classSecNormalized },
+        { accessCodeNormalized }
+      ]
+    }).lean();
+
+    if (existingUser) {
+      if (existingUser.accessCodeNormalized === accessCodeNormalized) {
+        return res.status(409).json({ ok: false, error: 'Access code already in use.' });
+      }
+      return res.status(409).json({ ok: false, error: 'User with this Roll No and Class already exists.' });
+    }
+
+    const newUser = await TicketUser.create({
+      name,
+      rollNo: rollNoNum,
+      classSec,
+      accessCode
+    });
+
+    return res.json({ ok: true, user: newUser });
+  } catch (err) {
+    console.error('Admin create user error:', err);
+    return res.status(500).json({ ok: false, error: 'Server error while creating user.' });
   }
 });
 
@@ -243,8 +315,6 @@ app.get('/storybook.html', (req, res) => {
     .catch(() => res.redirect('/qr-login.html'));
 });
 
-// Static assets (at the bottom to ensure /storybook.html is protected first)
-// Added explicit MIME types and used process.cwd() for Render compatibility
 app.use(express.static(path.join(process.cwd()), {
   setHeaders: (res, filePath) => {
     if (filePath.endsWith('.js')) {
