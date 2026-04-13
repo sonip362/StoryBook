@@ -226,22 +226,43 @@
     <div class="fixed inset-0 z-[3] pointer-events-none overflow-hidden" id="particles"></div>
 
     <!-- ===== TRIAL CONTENT (the "free preview") ===== -->
-    <div id="trialContent" class="page">
+    <div class="page">
         <div class="scroll-container">
             <div class="scroll-image-container">
                 <img class="scroll-image" src="./assests/images/storybook.png" alt="Storybook">
+                <button class="title-hotspot" type="button" aria-label="Hidden title hotspot"></button>
                 <div class="content-wrapper">
-                    <img class="castle-image" src="./assests/images/dracula-castle-bg.png" alt="Dracula Castle">
-                    <p class="castle-text">Lorem ipsum dolor sit amet consectetur adipisicing elit. Ex, quis et.
-                        Voluptatibus suscipit eos rem eum sint distinctio qui voluptas ea id mollitia, pariatur debitis
-                        sunt quidem omnis iste illo accusamus fugiat at ad necessitatibus aliquam quisquam quo? Et
-                        voluptatibus beatae sunt eum sequi harum dolor nostrum accusantium ad veniam?</p>
+                    <!-- Castle Section -->
+                    <div class="castle-section" style="overflow: hidden;">
+                        <img class="castle-image" src="./assests/images/dracula-castle-bg.png" alt="Dracula Castle">
+                        <p class="castle-text">Lorem ipsum dolor sit amet consectetur adipisicing elit. Fuga, eius
+                            maiores ducimus commodi autem praesentium minus aliquam vero deserunt accusantium excepturi
+                            voluptatibus? Molestias consequatur voluptatibus cumque suscipit, sit harum, eos ea, eaque
+                            aut nostrum optio dolore a ex? Tempora facere doloribus recusandae quaerat voluptates ad
+                            nisi amet minus voluptas corrupti.</p>
+                    </div>
+
+                    <!-- Dracula Section -->
+                    <div class="dracula-section" style="clear: both; margin-top: 70px; overflow: hidden;">
+                        <div id="draculaContainer" class="dracula-container">
+                            <img id="draculaImg" src="./assests/images/dracula.png" alt="Dracula" class="dracula-image">
+                        </div>
+                        <p class="castle-text" style="text-indent: 0; padding-top: 100px;">
+                            Lorem ipsum dolor sit amet consectetur adipisicing elit. Fuga, eius maiores ducimus
+                            commodi autem praesentium minus aliquam vero deserunt accusantium excepturi voluptatibus?
+                            Molestias consequatur voluptatibus cumque suscipit, sit harum, eos ea, eaque aut nostrum
+                            optio dolore a ex? Tempora facere doloribus recusandae quaerat voluptates ad nisi amet
+                            minus voluptas corrupti. Lorem ipsum dolor sit amet consectetur adipisicing elit. Fuga,
+                            eius maiores ducimus commodi autem praesentium minus aliquam vero deserunt accusantium
+                            excepturi voluptatibus? Molestias consequatur voluptatibus cumque suscipit, sit harum, eos
+                            ea, eaque aut nostrum optio dolore a ex? Tempora facere doloribus recusandae quaerat
+                            voluptates ad nisi amet minus voluptas corrupti.
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-
-    <!-- Trial Vignette (visual hint that content is locked) -->
+    </div <!-- Trial Vignette (visual hint that content is locked) -->
     <div class="trial-vignette"></div>
 
     <!-- ===== BOTTOM CTA BAR ===== -->
