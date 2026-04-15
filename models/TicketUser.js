@@ -14,7 +14,10 @@ const ticketUserSchema = new mongoose.Schema(
     classSecNormalized: { type: String, required: true, index: true },
     accessCode: { type: String, required: true, trim: true },
     accessCodeNormalized: { type: String, required: true, unique: true },
-    easterEggs: { type: [String], default: [] }
+    easterEggs: { type: [String], default: [] },
+    gems: { type: Number, default: 0 },
+    used: { type: Boolean, default: false },
+    rewardsReceived: { type: [String], default: [] }
   },
   { timestamps: true }
 );

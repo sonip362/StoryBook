@@ -1,13 +1,47 @@
-// Replace with your actual Render URL
-const RENDER_URL = "https://storybook-jfps.onrender.com/ping";
+// ===== Loading Shield (storybook.html preloader) =====
+(() => {
+  const loadingShield = document.getElementById('loadingShield');
+  if (!loadingShield) return;
 
-// This "pings" Render immediately to wake it up while the user reads
-window.onload = () => {
-  console.log("Waking up the dragon (Render)...");
-  fetch(RENDER_URL, { mode: 'no-cors' })
-    .then(() => console.log("Render is warming up!"))
-    .catch(err => console.log("Ping sent."));
-};
+  const hideShield = () => {
+    if (!loadingShield.isConnected) return;
+    loadingShield.classList.remove('active');
+    window.setTimeout(() => loadingShield.remove(), 650);
+  };
+
+  const waitForImages = () => {
+    const images = Array.from(document.images || []);
+    const pending = images.filter((img) => !img.complete);
+    if (pending.length === 0) return Promise.resolve();
+
+    return Promise.all(
+      pending.map(
+        (img) =>
+          new Promise((resolve) => {
+            const done = () => resolve();
+            img.addEventListener('load', done, { once: true });
+            img.addEventListener('error', done, { once: true });
+          })
+      )
+    );
+  };
+
+  const safetyTimeout = window.setTimeout(hideShield, 15000);
+
+  const start = () => {
+    waitForImages().then(() => {
+      window.clearTimeout(safetyTimeout);
+      hideShield();
+    });
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start, { once: true });
+  } else {
+    start();
+  }
+})();
+
 // ===== Background Music Controller =====
 const bgMusic = document.getElementById('bgMusic');
 const soundToggle = document.getElementById('soundToggle');
@@ -283,16 +317,129 @@ if (bgMusic) {
   }
 }
 
+// ===== Page Locking System =====
+const checkPageLock = (foundCount, gems) => {
+  const contentLock = document.getElementById('contentLock');
+  const reqEggs = document.getElementById('reqEggs');
+  const reqGems = document.getElementById('reqGems');
+  const scrollContainer = document.querySelector('.scroll-container');
+  const scrollImg = document.querySelector('.scroll-image');
+
+  // Mobile lock elements
+  const mobileLock = document.getElementById('mobileLock');
+  const mobileReqEggs = document.getElementById('mobileReqEggs');
+  const mobileReqGems = document.getElementById('mobileReqGems');
+
+  const hasEgg = foundCount >= 1;
+  const hasGems = gems >= 100;
+
+  // Desktop req badges
+  if (reqEggs) reqEggs.classList.toggle('req-met', hasEgg);
+  if (reqGems) reqGems.classList.toggle('req-met', hasGems);
+
+  // Mobile req badges
+  if (mobileReqEggs) mobileReqEggs.classList.toggle('mobile-req-met', hasEgg);
+  if (mobileReqGems) mobileReqGems.classList.toggle('mobile-req-met', hasGems);
+
+  if (hasEgg && hasGems) {
+    document.body.classList.remove('page-locked');
+    if (scrollContainer) scrollContainer.style.removeProperty('--lock-height');
+    // Hide mobile lock when requirements met
+    if (mobileLock) mobileLock.classList.remove('mobile-lock-visible');
+  } else {
+    document.body.classList.add('page-locked');
+
+    // Calculate precision lock height
+    if (scrollImg && scrollContainer) {
+      const isMobile = window.innerWidth <= 768;
+      const percent = isMobile ? 0.57 : 0.23;
+      const imgHeight = scrollImg.getBoundingClientRect().height;
+      if (imgHeight > 0) {
+        scrollContainer.style.setProperty('--lock-height', `${imgHeight * percent}px`);
+      }
+    }
+
+    // On mobile, show the mobile lock overlay when user hits scroll limit
+    // (visibility toggled by handlePageScroll)
+  }
+};
+
+
+// Handle resize and scroll to keep lock state and visibility accurate
+const handlePageScroll = () => {
+  const contentLock = document.getElementById('contentLock');
+  const mobileLock = document.getElementById('mobileLock');
+  const page = document.querySelector('.page');
+  const scrollContainer = document.querySelector('.scroll-container');
+
+  if (!page || !scrollContainer) return;
+
+  const isMobile = window.innerWidth <= 768;
+
+  if (document.body.classList.contains('page-locked')) {
+    const lockHeight = parseFloat(scrollContainer.style.getPropertyValue('--lock-height'));
+    if (!lockHeight || lockHeight <= 0) return;
+
+    // --- CLAMP scroll on mobile to kill the black void ---
+    if (isMobile) {
+      const maxScroll = Math.max(0, lockHeight - page.clientHeight);
+      if (page.scrollTop > maxScroll) {
+        page.scrollTop = maxScroll;
+        return; // re-entry will re-run this handler
+      }
+    }
+
+    const threshold = isMobile ? 60 : 100;
+    const isAtLimit = (page.scrollTop + page.clientHeight) >= (lockHeight - threshold);
+
+    if (isMobile) {
+      if (mobileLock) mobileLock.classList.toggle('mobile-lock-visible', isAtLimit);
+      if (contentLock) contentLock.classList.remove('lock-overlay-active');
+    } else {
+      if (contentLock) contentLock.classList.toggle('lock-overlay-active', isAtLimit);
+      if (mobileLock) mobileLock.classList.remove('mobile-lock-visible');
+    }
+  } else {
+    if (contentLock) contentLock.classList.remove('lock-overlay-active');
+    if (mobileLock) mobileLock.classList.remove('mobile-lock-visible');
+  }
+};
+
+window.addEventListener('resize', () => {
+  updateEggCounter();
+  handlePageScroll();
+});
+
+document.querySelector('.page')?.addEventListener('scroll', handlePageScroll);
+
 // ===== Easter Egg Counter =====
 const eggCountText = document.getElementById('eggCountText');
 
 const updateEggCounter = async () => {
   if (!eggCountText) return;
+  const gemCountText = document.getElementById('gemCountText');
   try {
     const res = await fetch('/api/easter-eggs/progress', { cache: 'no-store' });
     const data = await res.json().catch(() => null);
     if (data && data.ok) {
       eggCountText.textContent = `${data.foundCount} / ${data.total}`;
+      const gems = data.gems !== undefined ? data.gems : 0;
+
+      // Update lock state
+      checkPageLock(data.foundCount, gems);
+
+      if (gemCountText) {
+        const oldVal = gemCountText.textContent;
+        const newVal = gems;
+        gemCountText.textContent = newVal;
+        // Animation when gems increase (ignore initial load "0" to actual)
+        if (oldVal !== "0" && oldVal !== newVal.toString() && oldVal !== "—") {
+          const icon = gemCountText.parentElement;
+          icon.classList.remove('gem-bounce');
+          void icon.offsetWidth;
+          icon.classList.add('gem-bounce');
+        }
+      }
     }
   } catch {
     // silently ignore — counter just stays at previous value
@@ -318,6 +465,23 @@ const showEggToast = (message) => {
   toast.classList.add('show');
 };
 
+const showGemToast = (amount) => {
+  const toast = document.createElement('div');
+  toast.className = 'gem-reward-toast';
+  toast.innerHTML = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:24px;height:24px;color:#00f2ff;filter:drop-shadow(0 0 8px rgba(0,242,255,0.8));">
+      <path d="M12 2L4.5 9L12 22L19.5 9L12 2Z" />
+    </svg>
+    <span>+${amount} GEMS</span>
+  `;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.classList.add('show'), 100);
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => toast.remove(), 500);
+  }, 3000);
+};
+
 const unlockEasterEgg = async (eggId) => {
   if (triggeredEggs.has(eggId)) return;
   triggeredEggs.add(eggId);
@@ -331,6 +495,9 @@ const unlockEasterEgg = async (eggId) => {
     if (!response.ok || !payload?.ok) return;
     if (payload.newlyUnlocked) {
       showEggToast(`${payload.foundCount}/${payload.total} easter egg found`);
+      if (payload.gemsEarned > 0) {
+        setTimeout(() => showGemToast(payload.gemsEarned), 800);
+      }
       updateEggCounter();
     }
   } catch (error) {
@@ -477,3 +644,239 @@ if (draculaImg && videoModal && modalContent && modalVideo) {
   });
 }
 
+// ===== Morse Code Quiz Functionality =====
+async function checkMorseAnswer() {
+    const answerInput = document.getElementById('morseAnswer');
+    const feedback = document.getElementById('quizFeedback');
+    const quizContainer = document.getElementById('morseQuiz');
+    
+    if (!answerInput || !feedback) return;
+    
+    const userAnswer = answerInput.value.trim();
+    const correctAnswer = '.-.'; // Morse code for 'R' is ".-."
+    
+    if (userAnswer === correctAnswer || userAnswer === '. - .' || userAnswer === '.-.') {
+        feedback.textContent = 'Correct! You earned exactly 100 gems! 🎉';
+        feedback.style.color = '#005300';
+        
+        // Hide the quiz after correct answer
+        setTimeout(() => {
+            if (quizContainer) {
+                quizContainer.style.display = 'none';
+            }
+        }, 3000);
+        
+        // Add exactly 100 gems (not an easter egg) with one-time reward tracking
+        const result = await addGems(100, 'morse_quiz_reward');
+        
+        if (result.success) {
+          feedback.textContent = 'Correct! You earned exactly 100 gems! 🎉';
+        } else if (result.alreadyClaimed) {
+          feedback.textContent = 'You have already claimed this reward!';
+          feedback.style.color = '#ff8800';
+          
+          // Hide the quiz if already claimed
+          setTimeout(() => {
+            if (quizContainer) {
+              quizContainer.style.display = 'none';
+            }
+          }, 3000);
+        } else {
+          feedback.textContent = 'Error claiming reward. Please try again.';
+          feedback.style.color = '#ff4444';
+        }
+    } else {
+        feedback.textContent = 'Incorrect. Try again!';
+        feedback.style.color = '#ff4444';
+        
+        // Clear feedback after 2 seconds
+        setTimeout(() => {
+            feedback.textContent = '';
+        }, 2000);
+    }
+}
+
+// Quiz is now always visible, no need for click event
+
+// ===== Leaderboard Logic =====
+const leaderboardBtn = document.getElementById('leaderboardBtn');
+const leaderboardModal = document.getElementById('leaderboardModal');
+const closeLeaderboard = document.getElementById('closeLeaderboard');
+const leaderboardBody = document.getElementById('leaderboardBody');
+
+// Format a leaderboard row. If `isCurrent` is true, the row gets a green border and the name is wrapped in brackets.
+const formatLeaderboardRow = (user, index, isCurrent = false) => {
+  const isTop3 = index < 3;
+  // Use professional dark accent colors for ranking
+  const rankColor = isTop3 ? ['#b8860b', '#707070', '#8b4513'][index] : '#1a0f05cc';
+  const rowBg = isTop3 ? 'rgba(0, 0, 0, 0.03)' : 'transparent';
+  // Highlight current user with a subtle green background and display "[You]"
+  const currentStyle = isCurrent ? 'background: rgba(0, 211, 0, 0.15);' : '';
+  const displayName = isCurrent ? '[You]' : user.name;
+
+  return `
+    <tr style="background: ${rowBg}; border-bottom: 1px solid rgba(0,0,0,0.05); ${currentStyle}">
+      <td class="px-5 py-4 rounded-l-2xl">
+        <span class="font-cinzel text-sm font-black" style="color: ${rankColor}">${index + 1}</span>
+      </td>
+      <td class="px-5 py-4">
+        <div class="flex flex-col">
+          <span class="text-base tracking-wide capitalize text-[#1a0f05] font-bold">${displayName}</span>
+          <span class="text-[10px] text-[#1a0f05]/60 uppercase font-bold tracking-[0.2em]">${user.classSec}</span>
+        </div>
+      </td>
+      <td class="px-5 py-4 text-right rounded-r-2xl">
+        <div class="flex flex-col items-end">
+          <span class="font-cinzel text-sm text-[#1a0f05] font-black">${user.exp.toLocaleString()}</span>
+          <span class="text-[9px] text-[#1a0f05]/40 font-bold tracking-tight">${user.eggs}🥚 · ${user.gems}💎</span>
+        </div>
+      </td>
+    </tr>
+  `;
+};
+
+// Fetch current session user info
+let currentSessionUser = null;
+  const fetchCurrentUser = async () => {
+    // Retrieve the currently logged‑in user from the session endpoint.
+    // The endpoint returns { authenticated: Boolean, user: Object|null }.
+    // We store the user object (if any) in `currentSessionUser` for leaderboard highlighting.
+    try {
+      const res = await fetch('/api/session', { credentials: 'include' });
+      const data = await res.json();
+      // The API does not include an `ok` flag; use the presence of `user`.
+      if (data && data.user) {
+        currentSessionUser = data.user;
+        console.log('Fetched current user:', currentSessionUser);
+      } else {
+        currentSessionUser = null;
+        console.log('No authenticated user found');
+      }
+    } catch (e) {
+      console.error('Failed to fetch current user:', e);
+      currentSessionUser = null;
+    }
+  };
+
+const fetchLeaderboard = async () => {
+  if (!leaderboardBody) return;
+  leaderboardBody.innerHTML = '<tr><td colspan="3" class="text-center py-10 opacity-40 font-cinzel text-xs tracking-widest animate-pulse">Consulting the archives...</td></tr>';
+  // Ensure we have the current user info before rendering
+  await fetchCurrentUser();
+  try {
+    const res = await fetch('/api/leaderboard');
+    const data = await res.json();
+    if (data && data.ok) {
+      if (data.leaderboard.length === 0) {
+        leaderboardBody.innerHTML = '<tr><td colspan="3" class="text-center py-10 opacity-30 font-cinzel text-xs uppercase tracking-[0.2em]">No seekers found yet</td></tr>';
+      } else {
+        leaderboardBody.innerHTML = data.leaderboard
+          .map((user, i) => {
+            const isCurrent = currentSessionUser &&
+              typeof user.name === 'string' && typeof currentSessionUser.name === 'string' &&
+              user.name.trim().toLowerCase() === currentSessionUser.name.trim().toLowerCase();
+            console.log('Leaderboard row', i, 'user:', user.name, 'isCurrent:', isCurrent);
+            return formatLeaderboardRow(user, i, isCurrent);
+          })
+          .join('');
+      }
+    }
+  } catch (err) {
+    console.error('Failed to fetch leaderboard:', err);
+    leaderboardBody.innerHTML = '<tr><td colspan="3" class="text-center py-10 text-red-400/50 font-cinzel text-[10px]">Failed to fetch rankings</td></tr>';
+  }
+};
+
+if (leaderboardBtn && leaderboardModal) {
+  leaderboardBtn.addEventListener('click', () => {
+    fetchLeaderboard();
+    leaderboardModal.classList.remove('hidden');
+    leaderboardModal.classList.add('flex');
+    setTimeout(() => leaderboardModal.classList.add('opacity-100'), 10);
+  });
+}
+
+const hideLeaderboard = () => {
+  if (!leaderboardModal) return;
+  leaderboardModal.classList.remove('opacity-100');
+  setTimeout(() => {
+    leaderboardModal.classList.add('hidden');
+    leaderboardModal.classList.remove('flex');
+  }, 500);
+};
+
+if (closeLeaderboard) closeLeaderboard.addEventListener('click', hideLeaderboard);
+if (leaderboardModal) {
+  leaderboardModal.addEventListener('click', (e) => {
+    if (e.target === leaderboardModal) hideLeaderboard();
+  });
+}
+
+// ===== Reset Data Logic =====
+const resetDataBtn = document.getElementById('resetDataBtn');
+if (resetDataBtn) {
+  resetDataBtn.addEventListener('click', async () => {
+    const confirmed = confirm("Are you sure you want to delete all your progress? Your gems and discovered easter eggs will be reset to zero. This cannot be undone.");
+
+    if (confirmed) {
+      try {
+        const res = await fetch('/api/user/reset-data', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await res.json();
+
+        if (data.ok) {
+          showEggToast("Progress Reset Successful");
+          // Refresh the page to reset all states or manually update
+          setTimeout(() => {
+            window.location.reload();
+          }, 1500);
+        } else {
+          alert("Failed to reset data: " + (data.error || "Unknown error"));
+        }
+      } catch (err) {
+        console.error("Reset error:", err);
+        alert("An error occurred while resetting your data.");
+      }
+    }
+  });
+}
+
+// Add gems without counting as easter egg
+const addGems = async (amount, rewardId = null) => {
+  try {
+    const body = { gems: amount };
+    if (rewardId) {
+      body.rewardId = rewardId;
+    }
+    
+    const res = await fetch('/api/add-gems', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    
+    const data = await res.json();
+    if (data && data.ok) {
+      console.log(`Added ${amount} gems successfully`);
+      // Update the UI to reflect the new gem count
+      updateGemCount(data.gems);
+      return { success: true, data };
+    } else {
+      console.error('Failed to add gems:', data?.error);
+      return { success: false, error: data?.error, alreadyClaimed: data?.alreadyClaimed };
+    }
+  } catch (err) {
+    console.error('Error adding gems:', err);
+    return { success: false, error: err.message };
+  }
+};
+
+// Update gem count display
+const updateGemCount = (gems) => {
+  const gemCountText = document.getElementById('gemCountText');
+  if (gemCountText) {
+    gemCountText.textContent = gems;
+  }
+};

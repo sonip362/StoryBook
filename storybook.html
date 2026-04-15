@@ -7,9 +7,91 @@
     <title>StoryBook</title>
     <link rel="shortcut icon" href="./assests/images/logo.png" type="image/x-icon">
     <link rel="stylesheet" href="./dist/output.css">
+    <style>
+        /* ===== Loading Shield (Preloader) ===== */
+        .loading-shield {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2rem;
+            background: rgba(5, 2, 8, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+        }
+
+        .loading-shield.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .shield-spinner {
+            width: 80px;
+            height: 80px;
+            position: relative;
+        }
+
+        .shield-spinner::before,
+        .shield-spinner::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            border: 3px solid transparent;
+        }
+
+        .shield-spinner::before {
+            border-top-color: #f5d2c0;
+            border-right-color: rgba(245, 210, 192, 0.3);
+            animation: shield-spin 1.2s linear infinite;
+        }
+
+        .shield-spinner::after {
+            inset: 8px;
+            border-bottom-color: rgba(197, 140, 125, 0.8);
+            border-left-color: rgba(197, 140, 125, 0.2);
+            animation: shield-spin 1.8s linear infinite reverse;
+        }
+
+        @keyframes shield-spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .shield-text {
+            font-family: 'Cinzel', serif;
+            font-size: 1.1rem;
+            letter-spacing: 3px;
+            color: #f5d2c0;
+            text-transform: uppercase;
+            text-shadow: 0 0 20px rgba(255, 180, 100, 0.3);
+            transition: opacity 0.3s ease;
+        }
+
+        .shield-sub {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 0.85rem;
+            color: rgba(200, 180, 160, 0.6);
+            letter-spacing: 1px;
+        }
+    </style>
 </head>
 
 <body>
+    <!-- ===== LOADING SHIELD (preloader) ===== -->
+    <div id="loadingShield" class="loading-shield active">
+        <div class="shield-spinner"></div>
+        <span id="shieldStatus" class="shield-text">Preparing the Castle...</span>
+        <span class="shield-sub">First visit may take a moment</span>
+    </div>
+
     <script>
         // Server-side auth is enforced, but this improves UX on refresh/back/forward.
         fetch('/api/session', { cache: 'no-store' })
@@ -26,21 +108,98 @@
 
     <!-- Header -->
     <header id="storyHeader"
-        class="fixed top-0 left-0 right-0 z-[150] flex items-center px-5 py-4 transition-all duration-500"
+        class="fixed top-0 left-0 right-0 z-[150] flex items-center px-3 sm:px-5 py-3 sm:py-4 transition-all duration-500"
         style="background: rgba(15, 10, 5, 0.85); border-bottom: 1px solid rgba(245, 210, 192, 0.2); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);">
         <!-- Easter Egg Counter (left) -->
         <div id="eggCounter" class="flex items-center gap-2" title="Easter Eggs Found">
-            <!-- Egg icon -->
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
                 style="width:20px;height:20px;color:#f5d2c0;filter:drop-shadow(0 0 6px rgba(255,180,100,0.55));">
                 <path d="M12 2C8.686 2 5 6.477 5 11.5 5 16.747 8.134 22 12 22s7-5.253 7-10.5C19 6.477 15.314 2 12 2z" />
             </svg>
             <span id="eggCountText"
-                style="font-family:'Cinzel',serif;font-size:0.82rem;letter-spacing:2px;color:#f5d2c0;text-shadow:0 0 10px rgba(255,180,100,0.5);">
+                class="font-cinzel text-[0.75rem] sm:text-[0.82rem] tracking-widest sm:tracking-[2px]"
+                style="color:#f5d2c0;text-shadow:0 0 10px rgba(255,180,100,0.5);">
                 — / —
             </span>
         </div>
+
+        <!-- Leaderboard Trigger (Center) -->
+        <button id="leaderboardBtn"
+            class="flex items-center gap-2 group cursor-pointer transition-all duration-300 px-4 py-1.5 rounded-full hover:bg-white/5 border border-transparent hover:border-white/10"
+            style="margin-left: auto; margin-right: auto;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                style="width:18px;height:18px;color:#ffd700;filter:drop-shadow(0 0 5px rgba(255,215,0,0.3));">
+                <path fill-rule="evenodd"
+                    d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z"
+                    clip-rule="evenodd" />
+            </svg>
+            <span class="font-cinzel text-[0.55rem] sm:text-[0.65rem] tracking-[2px] sm:tracking-[3px]"
+                style="color:#ffd700;">RANKINGS</span>
+        </button>
+
+        <!-- Gem Counter (right) -->
+        <div id="gemCounter" class="flex items-center gap-2" title="Gems Collected">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                style="width:20px;height:20px;color:#00f2ff;filter:drop-shadow(0 0 6px rgba(0,242,255,0.6));">
+                <path d="M12 2L4.5 9L12 22L19.5 9L12 2Z" />
+            </svg>
+            <span id="gemCountText" class="font-cinzel text-[0.75rem] sm:text-[0.82rem]"
+                style="letter-spacing:1px;color:#00f2ff;text-shadow:0 0 10px rgba(0,242,255,0.5);">
+                0
+            </span>
+        </div>
+
+        <!-- Reset Progress (Extra Option) -->
+        <button id="resetDataBtn" class="ml-4 p-2 rounded-full hover:bg-white/10 transition-all duration-300"
+            title="Delete All Progress (Reset Data)">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                stroke="currentColor"
+                style="width:18px;height:18px;color:#ff4444;filter:drop-shadow(0 0 4px rgba(255,68,68,0.3));">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+            </svg>
+        </button>
     </header>
+
+    <!-- Leaderboard Modal -->
+    <div id="leaderboardModal"
+        class="fixed inset-0 z-[400] hidden bg-black/60 backdrop-blur-md flex items-center justify-center p-4 transition-all duration-500 opacity-0">
+        <div class="modal-content-base leaderboard-light rounded-[32px] w-full max-w-md overflow-hidden shadow-2xl">
+            <!-- Header -->
+            <div class="header-title px-8 py-7 flex justify-between items-center bg-black/5">
+                <h2 class="font-cinzel text-lg tracking-[0.25em]">HALL OF FAME</h2>
+                <button id="closeLeaderboard"
+                    class="w-10 h-10 flex items-center justify-center rounded-full bg-black/10 text-black hover:bg-black/20 transition-all cursor-pointer">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                            d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <!-- Table Container -->
+            <div class="max-h-[50vh] overflow-y-auto p-4 custom-scrollbar">
+                <table class="w-full text-left font-serif border-separate border-spacing-y-2">
+                    <thead class="text-[10px] uppercase tracking-[0.3em] font-bold opacity-50">
+                        <tr>
+                            <th class="px-4 py-2 font-normal">Rank</th>
+                            <th class="px-4 py-2 font-normal">Seeker</th>
+                            <th class="px-4 py-2 font-normal text-right">EXP</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboardBody">
+                        <!-- Rows injected by JS -->
+                    </tbody>
+                </table>
+            </div>
+            <!-- Footer Stats -->
+            <div class="px-8 py-5 bg-black/5 text-center">
+                <p style="font-family:'Cinzel',serif; font-size: 0.75rem; letter-spacing: 2px; font-weight: 700;">
+                    EXP = EGGS found × GEMS collected
+                </p>
+            </div>
+        </div>
+    </div>
 
     <!-- Sound Toggle -->
     <button id="soundToggle" title="Toggle Music" aria-label="Mute background music"
@@ -61,7 +220,7 @@
     <div class="page">
         <div class="scroll-container">
             <div class="scroll-image-container">
-                <img class="scroll-image" src="./assests/images/storybook.png" alt="Storybook">
+                <img class="scroll-image" src="./assests/images/storybook.webp" alt="Storybook">
                 <button class="title-hotspot" type="button" aria-label="Hidden title hotspot"></button>
                 <div class="content-wrapper">
                     <!-- Castle Section -->
@@ -79,6 +238,9 @@
                         <div id="draculaContainer" class="dracula-container">
                             <img id="draculaImg" src="./assests/images/dracula.png" alt="Dracula" class="dracula-image">
                         </div>
+                        
+                      
+                        
                         <p class="castle-text" style="text-indent: 0; padding-top: 100px;">
                             Lorem ipsum dolor sit amet consectetur adipisicing elit. Fuga, eius maiores ducimus
                             commodi autem praesentium minus aliquam vero deserunt accusantium excepturi voluptatibus?
@@ -90,7 +252,89 @@
                             ea, eaque aut nostrum optio dolore a ex? Tempora facere doloribus recusandae quaerat
                             voluptates ad nisi amet minus voluptas corrupti.
                         </p>
+                          <!-- Morse Code Quiz Question -->
+                        <div id="morseQuiz" class="quiz-container" style="margin: 40px 0; text-align: center; ">
+                            <p class="quiz-question" style="font-family: 'Cinzel', serif; color: #833711; font-size: 1.1rem; margin-bottom: 20px;">
+                                What's the Morse code for the letter 'R'?
+                            </p>
+                            <input type="text" id="morseAnswer" placeholder="Enter Morse code here..." 
+                                   style="padding: 10px 15px; border: 2px solid rgba(245, 210, 192, 0.3); 
+                                          background: rgba(15, 10, 5, 0.8); color: #fc7532; 
+                                          border-radius: 8px; font-family: monospace; font-size: 1rem;
+                                          text-align: center; width: 200px;"
+                                   onkeypress="if(event.key === 'Enter') checkMorseAnswer()">
+                            <button onclick="checkMorseAnswer()" 
+                                    style="margin-left: 10px; padding: 10px 20px; 
+                                           background: rgba(90, 33, 4, 0.603); 
+                                           border: 1px solid rgb(54, 18, 0); 
+                                           color: #702500; border-radius: 8px; 
+                                           cursor: pointer; font-family: 'Cinzel', serif;">
+                                Submit
+                            </button>
+                            <p id="quizFeedback" style="margin-top: 15px; color: #ffd700; font-family: 'Cinzel', serif; font-size: 0.9rem;"></p>
+                        </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Content Lock Overlay (Desktop) -->
+    <div id="contentLock"
+        class="fixed bottom-0 left-0 right-0 z-[140] hidden flex-col items-center justify-end h-[30vh] pointer-events-none transition-all duration-700 pb-8">
+        <div
+            class="flex items-center gap-3 sm:gap-6 px-5 sm:px-8 py-2 sm:py-3 bg-black/60 border border-white/20 rounded-full pointer-events-auto backdrop-blur-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+            <div class="flex items-center gap-2 sm:gap-3 pr-3 sm:pr-6 border-r border-white/10">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                    class="w-4 h-4 sm:w-5 sm:h-5 text-[#ffd700]">
+                    <path fill-rule="evenodd"
+                        d="M12 1.5a5.25 5.25 0 00-5.25 5.25v3a3 3 0 00-3 3v6.75a3 3 0 003 3h10.5a3 3 0 003-3v-6.75a3 3 0 00-3-3v-3c0-2.9-2.35-5.25-5.25-5.25zm3.75 8.25v-3a3.75 3.75 0 10-7.5 0v3h7.5z"
+                        clip-rule="evenodd" />
+                </svg>
+                <span
+                    class="hidden md:inline font-cinzel text-white text-[9px] sm:text-[10px] tracking-[0.3em] font-black">LOCKED</span>
+            </div>
+
+            <div class="flex gap-2 sm:gap-4">
+                <div id="reqEggs"
+                    class="flex items-center gap-2 px-3 sm:px-4 py-1.5 bg-white/5 rounded-full border border-white/5 opacity-30 transition-all duration-700">
+                    <span class="text-xs sm:text-sm">🥚</span>
+                    <span class="font-cinzel text-[8px] sm:text-[9px] tracking-widest text-white font-black"><span
+                            class="hidden sm:inline">1 </span>FOUND</span>
+                </div>
+                <div id="reqGems"
+                    class="flex items-center gap-2 px-3 sm:px-4 py-1.5 bg-white/5 rounded-full border border-white/5 opacity-30 transition-all duration-700">
+                    <span class="text-xs sm:text-sm">💎</span>
+                    <span class="font-cinzel text-[8px] sm:text-[9px] tracking-widest text-white font-black"><span
+                            class="hidden sm:inline">100 </span>GEMS</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Content Lock Overlay (Mobile Only) -->
+    <div id="mobileLock" class="mobile-lock-overlay">
+        <div class="mobile-lock-inner">
+            <!-- Animated Lock Icon -->
+            <div class="mobile-lock-icon-wrap">
+                <svg id="mobileLockSvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"
+                    class="mobile-lock-svg">
+                    <rect x="5" y="11" width="14" height="10" rx="2" />
+                    <path class="lock-shackle" d="M8 11V7a4 4 0 0 1 8 0v4" />
+                </svg>
+                <div class="mobile-lock-ring"></div>
+            </div>
+            <!-- Requirements -->
+            <div class="mobile-lock-reqs">
+                <div id="mobileReqEggs" class="mobile-lock-req">
+                    <span class="mobile-req-icon">🥚</span>
+                    <span class="mobile-req-label">1 EGG FOUND</span>
+                </div>
+                <div class="mobile-lock-req-divider"></div>
+                <div id="mobileReqGems" class="mobile-lock-req">
+                    <span class="mobile-req-icon">💎</span>
+                    <span class="mobile-req-label">100 GEMS</span>
                 </div>
             </div>
         </div>

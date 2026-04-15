@@ -172,6 +172,50 @@
     animation: eggToastInOut 2.3s ease;
 }
 
+/* ===== Gem Reward Toast ===== */
+.gem-reward-toast {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    background: rgba(0, 20, 30, 0.85);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(0, 242, 255, 0.4);
+    border-radius: 16px;
+    color: #00f2ff;
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    letter-spacing: 1px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 242, 255, 0.2);
+    transform: translateX(120%);
+    transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.gem-reward-toast.show {
+    transform: translateX(0);
+}
+
+@keyframes gemBounce {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.3);
+        filter: brightness(1.5);
+    }
+}
+
+.gem-bounce {
+    animation: gemBounce 0.5s ease-out;
+}
+
 body.blood-text-mode,
 body.blood-text-mode p,
 body.blood-text-mode span,
@@ -457,5 +501,232 @@ body {
     .dracula-section .castle-text {
         padding-top: 20px !important;
         /* Fixing the 100px padding the user added in HTML */
+    }
+}
+
+/* ===== Custom Scrollbar for Modal ===== */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(245, 210, 192, 0.05);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(245, 210, 192, 0.2);
+    border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(245, 210, 192, 0.3);
+}
+
+/* ===== Leaderboard Transitions ===== */
+#leaderboardModal.opacity-100 .modal-content-base {
+    transform: scale(1);
+    opacity: 1;
+}
+
+#leaderboardModal .modal-content-base {
+    transform: scale(0.95);
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+/* ===== Page Locking System ===== */
+.page-locked .scroll-container {
+    max-height: var(--lock-height, 100vh);
+    overflow: hidden;
+    transition: max-height 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Prevent over-scroll bounce (iOS/Android) from revealing the black void */
+.page-locked .page {
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: auto; /* disables momentum bounce on old iOS */
+}
+
+.scroll-container {
+    transition: max-height 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+
+.lock-overlay-active {
+    display: flex !important;
+}
+
+.req-met {
+    opacity: 1 !important;
+    border-color: #4ade80 !important;
+    background: rgba(74, 222, 128, 0.2) !important;
+    color: #4ade80 !important;
+    box-shadow: 0 0 15px rgba(74, 222, 128, 0.3);
+}
+
+/* Light Yellow Leaderboard Theme */
+.leaderboard-light {
+
+    background-color: #fff9d6 !important;
+    color: #1a0f05 !important;
+}
+
+.leaderboard-light .header-title {
+    color: #1a0f05 !important;
+    border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+}
+
+.leaderboard-light table thead {
+    color: rgba(0, 0, 0, 0.5) !important;
+}
+
+.leaderboard-light table tbody {
+    color: #1a0f05 !important;
+}
+
+@media (max-width: 640px) {
+    #leaderboardModal .modal-content-base {
+        width: 95vw !important;
+        max-width: none !important;
+        margin: 10px;
+        bottom: 50% !important;
+        right: 50% !important;
+        transform: translate(50%, 50%) scale(0.95);
+    }
+
+    #leaderboardModal.opacity-100 .modal-content-base {
+        transform: translate(50%, 50%) scale(1) !important;
+    }
+}
+
+/* ===== Mobile Lock Overlay ===== */
+.mobile-lock-overlay {
+    display: none; /* hidden by default; JS shows it on mobile only */
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 140;
+    pointer-events: none;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.mobile-lock-overlay.mobile-lock-visible {
+    display: flex;
+}
+
+.mobile-lock-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    padding: 20px 28px 24px;
+    margin-bottom: 16px;
+    background: rgba(8, 4, 2, 0.82);
+    border: 1px solid rgba(245, 210, 192, 0.14);
+    border-radius: 28px;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255,255,255,0.03) inset;
+    pointer-events: auto;
+}
+
+/* Lock icon wrapper */
+.mobile-lock-icon-wrap {
+    position: relative;
+    width: 52px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mobile-lock-svg {
+    width: 34px;
+    height: 34px;
+    color: rgba(245, 210, 192, 0.85);
+    filter: drop-shadow(0 0 8px rgba(245, 180, 120, 0.45));
+    animation: lockPulse 3s ease-in-out infinite;
+}
+
+/* Shackle open hint on loop */
+@keyframes lockPulse {
+    0%, 100% {
+        filter: drop-shadow(0 0 6px rgba(245, 180, 120, 0.35));
+        opacity: 0.85;
+    }
+    50% {
+        filter: drop-shadow(0 0 14px rgba(245, 180, 120, 0.7));
+        opacity: 1;
+    }
+}
+
+/* Soft ping ring */
+.mobile-lock-ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 1.5px solid rgba(245, 210, 192, 0.25);
+    animation: lockRingPing 2.8s ease-out infinite;
+}
+
+@keyframes lockRingPing {
+    0% { transform: scale(0.85); opacity: 0.6; }
+    70% { transform: scale(1.55); opacity: 0; }
+    100% { transform: scale(1.55); opacity: 0; }
+}
+
+/* Requirements row */
+.mobile-lock-reqs {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.mobile-lock-req {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(245, 210, 192, 0.12);
+    background: rgba(255, 255, 255, 0.04);
+    opacity: 0.4;
+    transition: opacity 0.6s ease, border-color 0.6s ease, background 0.6s ease, box-shadow 0.6s ease;
+}
+
+.mobile-lock-req.mobile-req-met {
+    opacity: 1;
+    border-color: rgba(74, 222, 128, 0.5);
+    background: rgba(74, 222, 128, 0.12);
+    box-shadow: 0 0 12px rgba(74, 222, 128, 0.25);
+}
+
+.mobile-req-icon {
+    font-size: 0.8rem;
+    line-height: 1;
+}
+
+.mobile-req-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.52rem;
+    letter-spacing: 0.18em;
+    font-weight: 700;
+    color: rgba(245, 210, 192, 0.9);
+    text-transform: uppercase;
+}
+
+.mobile-lock-req-divider {
+    width: 1px;
+    height: 16px;
+    background: rgba(245, 210, 192, 0.12);
+}
+
+/* Ensure the desktop lock never shows on mobile */
+@media (max-width: 768px) {
+    #contentLock {
+        display: none !important;
     }
 }

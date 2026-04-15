@@ -77,19 +77,13 @@ const getUserQueryFromSession = (sessionUser) => ({
 
 // Middleware — CORS for GitHub Pages ↔ Render cross-origin requests
 app.use(cors({
+  // Allow any origin (including requests with no origin). This is suitable for
+  // development environments where the server may be accessed from various
+  // devices on the local network. Credentials are still allowed so that the
+  // session cookie works across origins.
   origin: function (origin, callback) {
-    // Allow requests with no origin (mobile apps, curl, etc.)
-    if (!origin) return callback(null, true);
-    const allowed = [
-      /\.github\.io$/,          // Any GitHub Pages subdomain
-      /localhost/,              // Local development
-      /127\.0\.0\.1/,           // Local development
-      /onrender\.com$/          // Render-to-Render (same backend)
-    ];
-    if (allowed.some(pattern => pattern.test(origin))) {
-      return callback(null, true);
-    }
-    callback(new Error('CORS not allowed'));
+    // If there is no origin (e.g., curl, mobile apps) or any origin, allow it.
+    return callback(null, true);
   },
   credentials: true                // Allow cookies (sb_session) cross-origin
 }));
@@ -164,9 +158,14 @@ app.post('/api/ticket/verify', async (req, res) => {
     // Query by accessCode first (unique), then verify other fields after normalization.
     // This stays compatible even if older rows are missing normalized fields.
     const user = await TicketUser.findOne({ accessCodeNormalized: inputCode })
-      .select('name rollNo classSec accessCode accessCodeNormalized')
+      .select('name rollNo classSec accessCode accessCodeNormalized used')
       .lean();
     if (!user) return res.status(401).json({ ok: false, error: 'Invalid details.' });
+
+    // Check if access code has already been used
+    if (user.used) {
+      return res.status(401).json({ ok: false, error: 'This access code has already been used.' });
+    }
 
     const match =
       normalizeName(user.name) === inputName &&
@@ -175,6 +174,12 @@ app.post('/api/ticket/verify', async (req, res) => {
       normalizeAccessCode(user.accessCodeNormalized || user.accessCode) === inputCode;
 
     if (!match) return res.status(401).json({ ok: false, error: 'Invalid details.' });
+
+    // Mark access code as used
+    await TicketUser.updateOne(
+      { accessCodeNormalized: inputCode },
+      { $set: { used: true } }
+    );
 
     await setSession(res, { name: user.name, rollNo: user.rollNo, classSec: user.classSec }, Boolean(rememberMe));
     return res.json({ ok: true, user: { name: user.name, rollNo: user.rollNo, classSec: user.classSec } });
@@ -243,7 +248,7 @@ app.get('/api/easter-eggs/progress', async (req, res) => {
     }
 
     const user = await TicketUser.findOne(getUserQueryFromSession(sessionUser))
-      .select('easterEggs')
+      .select('easterEggs gems')
       .lean();
 
     if (!user) return res.status(404).json({ ok: false, error: 'User not found.' });
@@ -253,7 +258,8 @@ app.get('/api/easter-eggs/progress', async (req, res) => {
       ok: true,
       unlocked,
       foundCount: unlocked.length,
-      total: TOTAL_EASTER_EGGS
+      total: TOTAL_EASTER_EGGS,
+      gems: user.gems || 0
     });
   } catch (err) {
     console.error('Easter egg progress error:', err);
@@ -277,17 +283,24 @@ app.post('/api/easter-eggs/unlock', async (req, res) => {
     }
 
     const user = await TicketUser.findOne(getUserQueryFromSession(sessionUser))
-      .select('_id easterEggs')
+      .select('_id easterEggs gems')
       .lean();
     if (!user) return res.status(404).json({ ok: false, error: 'User not found.' });
 
     const unlocked = Array.isArray(user.easterEggs) ? user.easterEggs : [];
     const alreadyUnlocked = unlocked.includes(eggId);
+    let gemsEarned = 0;
+    let newGemTotal = user.gems || 0;
 
     if (!alreadyUnlocked) {
+      gemsEarned = 100 + Math.floor(Math.random() * 51); // 100 to 150 gems
+      newGemTotal += gemsEarned;
       await TicketUser.updateOne(
         { _id: user._id },
-        { $addToSet: { easterEggs: eggId } }
+        {
+          $addToSet: { easterEggs: eggId },
+          $inc: { gems: gemsEarned }
+        }
       );
     }
 
@@ -296,12 +309,132 @@ app.post('/api/easter-eggs/unlock', async (req, res) => {
       ok: true,
       eggId,
       newlyUnlocked: !alreadyUnlocked,
+      gemsEarned,
+      gems: newGemTotal,
       foundCount,
       total: TOTAL_EASTER_EGGS
     });
   } catch (err) {
     console.error('Easter egg unlock error:', err);
     return res.status(500).json({ ok: false, error: 'Server error.' });
+  }
+});
+
+// Add gems without counting as easter egg
+app.post('/api/add-gems', async (req, res) => {
+  try {
+    const sessionUser = await getSessionUser(req);
+    if (!sessionUser) return res.status(401).json({ ok: false, error: 'Unauthorized' });
+
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({ ok: false, error: 'Database not connected. Try again in a moment.' });
+    }
+
+    const gemsToAdd = parseInt(req.body?.gems) || 0;
+    const rewardId = req.body?.rewardId;
+    
+    if (gemsToAdd <= 0) {
+      return res.status(400).json({ ok: false, error: 'Invalid gem amount.' });
+    }
+
+    const user = await TicketUser.findOne(getUserQueryFromSession(sessionUser))
+      .select('_id gems rewardsReceived')
+      .lean();
+    if (!user) return res.status(404).json({ ok: false, error: 'User not found.' });
+
+    // Check if this is a one-time reward and if user has already received it
+    if (rewardId) {
+      const rewardsReceived = Array.isArray(user.rewardsReceived) ? user.rewardsReceived : [];
+      if (rewardsReceived.includes(rewardId)) {
+        return res.status(400).json({ 
+          ok: false, 
+          error: 'Reward already claimed.',
+          alreadyClaimed: true
+        });
+      }
+    }
+
+    const newGemTotal = (user.gems || 0) + gemsToAdd;
+    
+    // Update gems and track reward if it's a one-time reward
+    const updateData = { $inc: { gems: gemsToAdd } };
+    if (rewardId) {
+      updateData.$addToSet = { rewardsReceived: rewardId };
+    }
+    
+    await TicketUser.updateOne(
+      { _id: user._id },
+      updateData
+    );
+
+    return res.json({
+      ok: true,
+      gemsAdded: gemsToAdd,
+      gems: newGemTotal,
+      rewardId: rewardId || null
+    });
+  } catch (err) {
+    console.error('Add gems error:', err);
+    return res.status(500).json({ ok: false, error: 'Server error.' });
+  }
+});
+
+app.get('/api/leaderboard', async (req, res) => {
+  try {
+    const sessionUser = await getSessionUser(req);
+    if (!sessionUser) return res.status(401).json({ ok: false, error: 'Unauthorized' });
+
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({ ok: false, error: 'Database not connected.' });
+    }
+
+    const users = await TicketUser.find({})
+      .select('name classSec easterEggs gems')
+      .lean();
+
+    const leaderboard = users.map(u => {
+      const eggsCount = Array.isArray(u.easterEggs) ? u.easterEggs.length : 0;
+      const gemsCount = u.gems || 0;
+      const exp = eggsCount * gemsCount;
+      return {
+        name: u.name,
+        classSec: u.classSec,
+        eggs: eggsCount,
+        gems: gemsCount,
+        exp: exp
+      };
+    })
+      .sort((a, b) => b.exp - a.exp)
+      .slice(0, 50); // Top 50
+
+    return res.json({ ok: true, leaderboard });
+  } catch (err) {
+    console.error('Leaderboard error:', err);
+    return res.status(500).json({ ok: false, error: 'Server error.' });
+  }
+});
+
+app.post('/api/user/reset-data', async (req, res) => {
+  try {
+    const sessionUser = await getSessionUser(req);
+    if (!sessionUser) return res.status(401).json({ ok: false, error: 'Unauthorized' });
+
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({ ok: false, error: 'Database not connected.' });
+    }
+
+    const userQuery = getUserQueryFromSession(sessionUser);
+    await TicketUser.updateOne(userQuery, {
+      $set: {
+        easterEggs: [],
+        gems: 0
+      }
+    });
+
+    return res.json({ ok: true, message: 'Progress reset successfully.' });
+  } catch (err) {
+    console.error('Reset data error:', err);
+    return res.status(500).json({ ok: false, error: 'Server error while resetting data.' });
   }
 });
 
