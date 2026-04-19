@@ -1499,7 +1499,7 @@ html, body {
 body {
   margin: 0;
   min-height: 100vh;
-  background: #000;
+  background: #c4a484;
   overflow: hidden;
 }
 .page {
@@ -1524,28 +1524,49 @@ body {
 }
 .scroll-container {
   width: 100vw;
+  min-height: 100vh;
+  min-height: calc(var(--app-vh, 1vh) * 100);
 }
-.scroll-image-container {
+:root {
+  --scroll-top-height-desktop: 400px;
+  --scroll-middle-height-desktop: 3000px;
+  --scroll-bottom-height-desktop: 300px;
+  --scroll-top-height-mobile: 130px;
+  --scroll-middle-height-mobile: 2000px;
+  --scroll-bottom-height-mobile: 210px;
+}
+.storybook-shell {
+  width: 100vw;
+  min-height: 100vh;
+  min-height: calc(var(--app-vh, 1vh) * 100);
+  display: flex;
+  flex-direction: column;
+}
+.scroll-top {
   position: relative;
-  width: 100vw;
-  display: block;
+  height: var(--scroll-top-height-desktop);
+  flex: 0 0 var(--scroll-top-height-desktop);
+  background: url('/assests/images/storybook-top.jpg') center top / 100% 100% no-repeat;
 }
-.scroll-image {
-  width: 100vw;
-  height: auto;
-  display: block;
-  object-fit: cover;
+.scroll-middle {
+  position: relative;
+  min-height: var(--scroll-middle-height-desktop);
+  flex: 1 0 auto;
+  background: url('/assests/images/storybook-middle.jpg') center top / 100% auto repeat-y;
+}
+.scroll-bottom {
+  height: var(--scroll-bottom-height-desktop);
+  flex: 0 0 var(--scroll-bottom-height-desktop);
+  background: url('/assests/images/storybook-end.jpg') center bottom / 100% 100% no-repeat;
 }
 .content-wrapper {
   display: block;
-  padding: 0 32px;
+  padding: 52px 32px 70px;
   background: transparent;
   width: min(94vw, 1320px);
+  margin: 0 auto;
   box-sizing: border-box;
-  position: absolute;
-  top: 23%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  position: relative;
   z-index: 2;
 }
 .castle-image {
@@ -1581,20 +1602,55 @@ body {
   padding: 0 4px;
   vertical-align: top;
 }
-.dracula-container {
-  float: left;
-  width: clamp(240px, 24vw, 340px);
-  margin: 30px 45px 15px 0;
-  position: relative;
+.dracula-section {
+  clear: both;
+  margin-top: 70px;
   overflow: hidden;
-  border-radius: 12px;
-  shape-outside: url('../assests/images/dracula.png');
-  shape-margin: 25px;
-  shape-image-threshold: 0.1;
+}
+.dracula-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 40px;
+  margin-bottom: 60px;
+  width: 100%;
+}
+.dracula-row-reverse {
+  flex-direction: row-reverse;
+}
+.dracula-container {
+  width: clamp(620px, 66vw, 1020px);
+  height: auto;
+  max-width: 100%;
+  margin-bottom: 24px;
+  overflow: visible;
+}
+.dracula-narrative {
+  margin: 40px 0;
+  width: 100%;
+}
+.war-image-container {
+  width: 100%;
+  max-width: 1000px;
+  margin: 30px auto;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+}
+.dracula-story {
+  text-indent: 0;
+  margin: 0;
+  padding-top: 2px;
+  text-align: left;
+}
+.dracula-quiz {
+  clear: both;
+  width: min(92%, 560px);
+  margin: 18px auto 0 !important;
 }
 .dracula-image {
   width: 100%;
   height: auto;
+  object-fit: contain;
   cursor: pointer;
   transition: transform 0.3s ease;
   display: block;
@@ -1623,23 +1679,28 @@ body {
   opacity: 1 !important;
 }
 @media (max-width: 768px) {
+  :root {
+    --scroll-top-height-desktop: var(--scroll-top-height-mobile);
+    --scroll-middle-height-desktop: var(--scroll-middle-height-mobile);
+    --scroll-bottom-height-desktop: var(--scroll-bottom-height-mobile);
+  }
   .egg-toast {
     bottom: 92px;
     min-width: 180px;
     font-size: 0.85rem;
   }
   .title-hotspot {
-    top: 10%;
+    top: 54%;
     width: 62vw;
     height: 52vw;
   }
   .content-wrapper {
     width: 100%;
-    padding: 0 20px;
-    top: 10%;
-    left: 50%;
-    transform: translate(-50%, 0);
-    position: absolute;
+    padding: 34px 20px 60px;
+    position: relative;
+    transform: none;
+    left: auto;
+    top: auto;
     display: block;
   }
   .castle-section, .dracula-section {
@@ -1677,16 +1738,43 @@ body {
     initial-letter: normal !important;
     -webkit-initial-letter: normal !important;
   }
-  .dracula-container {
-    float: left !important;
-    display: block !important;
-    margin: 0 auto 15px !important;
-    width: 45vw !important;
-    max-width: 120px !important;
-    shape-outside: none !important;
+  .dracula-section {
+    margin-top: 20px !important;
   }
-  .dracula-section .castle-text {
-    padding-top: 20px !important;
+  .dracula-row {
+    flex-direction: column-reverse !important;
+    gap: 20px !important;
+    align-items: center !important;
+  }
+  .dracula-container {
+    position: relative !important;
+    display: block !important;
+    margin: 0 auto 16px !important;
+    width: min(92vw, 560px) !important;
+    height: auto !important;
+    max-width: 100% !important;
+  }
+  .war-image-container {
+    width: 100%;
+    margin: 20px 0 !important;
+    border-radius: 12px;
+  }
+  .dracula-image {
+    height: auto !important;
+    max-height: none !important;
+  }
+  .dracula-story {
+    padding-top: 0 !important;
+  }
+  .dracula-quiz {
+    position: relative !important;
+    left: auto !important;
+    bottom: auto !important;
+    transform: none !important;
+    clear: both !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 18px auto 0 !important;
   }
 }
 .custom-scrollbar::-webkit-scrollbar {
@@ -1766,43 +1854,47 @@ body {
   bottom: 0;
   left: 0;
   right: 0;
-  z-index: 140;
+  z-index: 160;
   pointer-events: none;
   align-items: flex-end;
   justify-content: center;
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
+  padding-left: 10px;
+  padding-right: 10px;
 }
 .mobile-lock-overlay.mobile-lock-visible {
   display: flex;
 }
 .mobile-lock-inner {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 14px;
-  padding: 20px 28px 24px;
-  margin-bottom: 16px;
-  background: rgba(8, 4, 2, 0.82);
-  border: 1px solid rgba(245, 210, 192, 0.14);
-  border-radius: 28px;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255,255,255,0.03) inset;
+  justify-content: space-between;
+  gap: 10px;
+  width: min(640px, calc(100vw - 20px));
+  padding: 10px 12px;
+  background: linear-gradient(135deg, rgba(12, 7, 4, 0.92), rgba(32, 17, 8, 0.9));
+  border: 1px solid rgba(245, 210, 192, 0.2);
+  border-radius: 16px;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
   pointer-events: auto;
 }
 .mobile-lock-icon-wrap {
   position: relative;
-  width: 52px;
-  height: 52px;
+  width: 34px;
+  height: 34px;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex: 0 0 auto;
 }
 .mobile-lock-svg {
-  width: 34px;
-  height: 34px;
+  width: 20px;
+  height: 20px;
   color: rgba(245, 210, 192, 0.85);
-  filter: drop-shadow(0 0 8px rgba(245, 180, 120, 0.45));
+  filter: drop-shadow(0 0 6px rgba(245, 180, 120, 0.4));
   animation: lockPulse 3s ease-in-out infinite;
 }
 @keyframes lockPulse {
@@ -1819,7 +1911,7 @@ body {
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  border: 1.5px solid rgba(245, 210, 192, 0.25);
+  border: 1px solid rgba(245, 210, 192, 0.25);
   animation: lockRingPing 2.8s ease-out infinite;
 }
 @keyframes lockRingPing {
@@ -1839,13 +1931,15 @@ body {
 .mobile-lock-reqs {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  flex: 1;
+  justify-content: flex-end;
 }
 .mobile-lock-req {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 5px 12px;
+  padding: 5px 10px;
   border-radius: 999px;
   border: 1px solid rgba(245, 210, 192, 0.12);
   background: rgba(255, 255, 255, 0.04);
@@ -1859,25 +1953,29 @@ body {
   box-shadow: 0 0 12px rgba(74, 222, 128, 0.25);
 }
 .mobile-req-icon {
-  font-size: 0.8rem;
+  font-size: 0.72rem;
   line-height: 1;
 }
 .mobile-req-label {
   font-family: 'Cinzel', serif;
-  font-size: 0.52rem;
-  letter-spacing: 0.18em;
+  font-size: 0.48rem;
+  letter-spacing: 0.13em;
   font-weight: 700;
   color: rgba(245, 210, 192, 0.9);
   text-transform: uppercase;
+  white-space: nowrap;
 }
 .mobile-lock-req-divider {
   width: 1px;
-  height: 16px;
+  height: 14px;
   background: rgba(245, 210, 192, 0.12);
 }
 @media (max-width: 768px) {
   #contentLock {
     display: none !important;
+  }
+  .page-locked .page {
+    padding-bottom: 74px;
   }
 }
 @property --tw-border-spacing-x {

@@ -42,6 +42,14 @@
   }
 })();
 
+// ===== Mobile viewport height fix (prevents bottom void on browser UI resize) =====
+const setAppViewportHeight = () => {
+  document.documentElement.style.setProperty('--app-vh', `${window.innerHeight * 0.01}px`);
+};
+setAppViewportHeight();
+window.addEventListener('resize', setAppViewportHeight);
+window.addEventListener('orientationchange', setAppViewportHeight);
+
 // ===== Background Music Controller =====
 const bgMusic = document.getElementById('bgMusic');
 const soundToggle = document.getElementById('soundToggle');
@@ -318,20 +326,72 @@ if (bgMusic) {
 }
 
 // ===== Page Locking System =====
+const lockSteps = [
+  { eggs: 1, gems: 100, desktopPercent: 0.30, mobilePercent: 0.28 },
+  { eggs: 2, gems: 200, desktopPercent: 0.40, mobilePercent: 0.70 },
+  { eggs: 3, gems: 300, desktopPercent: 0.90, mobilePercent: 2.50 }
+];
+
+const getOffsetTopWithin = (element, ancestor) => {
+  let top = 0;
+  let node = element;
+  while (node && node !== ancestor) {
+    top += node.offsetTop || 0;
+    node = node.offsetParent;
+  }
+  return top;
+};
+
+const getLockHeight = (activeStep, isMobile, scrollContainer, scrollFrame) => {
+  const frameHeight = scrollFrame?.getBoundingClientRect().height || 0;
+  if (!frameHeight) return 0;
+
+  // On mobile, first lock should appear right after the castle section.
+  if (isMobile && activeStep.eggs === 1) {
+    const draculaSection = document.querySelector('.dracula-section');
+    if (draculaSection && scrollContainer) {
+      const lockAt = getOffsetTopWithin(draculaSection, scrollContainer) - 12;
+      if (lockAt > 0) return Math.min(lockAt, frameHeight);
+    }
+  }
+
+  const percent = isMobile ? activeStep.mobilePercent : activeStep.desktopPercent;
+  return frameHeight * percent;
+};
+
 const checkPageLock = (foundCount, gems) => {
   const contentLock = document.getElementById('contentLock');
   const reqEggs = document.getElementById('reqEggs');
   const reqGems = document.getElementById('reqGems');
+  const reqEggsLabel = document.getElementById('reqEggsLabel');
+  const reqGemsLabel = document.getElementById('reqGemsLabel');
   const scrollContainer = document.querySelector('.scroll-container');
-  const scrollImg = document.querySelector('.scroll-image');
+  const scrollFrame = document.querySelector('.storybook-shell') || document.querySelector('.scroll-image');
 
   // Mobile lock elements
   const mobileLock = document.getElementById('mobileLock');
   const mobileReqEggs = document.getElementById('mobileReqEggs');
   const mobileReqGems = document.getElementById('mobileReqGems');
+  const mobileReqEggsLabel = document.getElementById('mobileReqEggsLabel');
+  const mobileReqGemsLabel = document.getElementById('mobileReqGemsLabel');
 
-  const hasEgg = foundCount >= 1;
-  const hasGems = gems >= 100;
+  const activeStep = lockSteps.find((step) => foundCount < step.eggs || gems < step.gems);
+
+  if (!activeStep) {
+    document.body.classList.remove('page-locked');
+    if (scrollContainer) scrollContainer.style.removeProperty('--lock-height');
+    if (mobileLock) mobileLock.classList.remove('mobile-lock-visible');
+    if (contentLock) contentLock.classList.remove('lock-overlay-active');
+    return;
+  }
+
+  const hasEgg = foundCount >= activeStep.eggs;
+  const hasGems = gems >= activeStep.gems;
+
+  if (reqEggsLabel) reqEggsLabel.innerHTML = `<span class="hidden sm:inline">${activeStep.eggs} </span>FOUND`;
+  if (reqGemsLabel) reqGemsLabel.innerHTML = `<span class="hidden sm:inline">${activeStep.gems} </span>GEMS`;
+  if (mobileReqEggsLabel) mobileReqEggsLabel.textContent = `${activeStep.eggs} EGG${activeStep.eggs > 1 ? 'S' : ''} FOUND`;
+  if (mobileReqGemsLabel) mobileReqGemsLabel.textContent = `${activeStep.gems} GEMS`;
 
   // Desktop req badges
   if (reqEggs) reqEggs.classList.toggle('req-met', hasEgg);
@@ -341,26 +401,21 @@ const checkPageLock = (foundCount, gems) => {
   if (mobileReqEggs) mobileReqEggs.classList.toggle('mobile-req-met', hasEgg);
   if (mobileReqGems) mobileReqGems.classList.toggle('mobile-req-met', hasGems);
 
-  if (hasEgg && hasGems) {
-    document.body.classList.remove('page-locked');
-    if (scrollContainer) scrollContainer.style.removeProperty('--lock-height');
-    // Hide mobile lock when requirements met
-    if (mobileLock) mobileLock.classList.remove('mobile-lock-visible');
-  } else {
-    document.body.classList.add('page-locked');
+  document.body.classList.add('page-locked');
 
-    // Calculate precision lock height
-    if (scrollImg && scrollContainer) {
-      const isMobile = window.innerWidth <= 768;
-      const percent = isMobile ? 0.57 : 0.23;
-      const imgHeight = scrollImg.getBoundingClientRect().height;
-      if (imgHeight > 0) {
-        scrollContainer.style.setProperty('--lock-height', `${imgHeight * percent}px`);
-      }
+  // Calculate precision lock height for active step
+  if (scrollFrame && scrollContainer) {
+    const isMobile = window.innerWidth <= 768;
+    const lockHeight = getLockHeight(activeStep, isMobile, scrollContainer, scrollFrame);
+    if (lockHeight > 0) {
+      scrollContainer.style.setProperty('--lock-height', `${lockHeight}px`);
     }
+  }
 
-    // On mobile, show the mobile lock overlay when user hits scroll limit
-    // (visibility toggled by handlePageScroll)
+  // On mobile, show the mobile lock overlay when user hits scroll limit
+  // as a persistent header while locked
+  if (window.innerWidth <= 768 && mobileLock) {
+    mobileLock.classList.add('mobile-lock-visible');
   }
 };
 
@@ -393,7 +448,7 @@ const handlePageScroll = () => {
     const isAtLimit = (page.scrollTop + page.clientHeight) >= (lockHeight - threshold);
 
     if (isMobile) {
-      if (mobileLock) mobileLock.classList.toggle('mobile-lock-visible', isAtLimit);
+      if (mobileLock) mobileLock.classList.add('mobile-lock-visible');
       if (contentLock) contentLock.classList.remove('lock-overlay-active');
     } else {
       if (contentLock) contentLock.classList.toggle('lock-overlay-active', isAtLimit);
@@ -448,6 +503,12 @@ const updateEggCounter = async () => {
 
 // Load count on page open
 updateEggCounter();
+
+// Re-evaluate lock after full render/images settle (important for mobile layout heights).
+window.addEventListener('load', () => {
+  updateEggCounter();
+  handlePageScroll();
+});
 
 // ===== Easter Egg helpers =====
 
@@ -646,54 +707,54 @@ if (draculaImg && videoModal && modalContent && modalVideo) {
 
 // ===== Morse Code Quiz Functionality =====
 async function checkMorseAnswer() {
-    const answerInput = document.getElementById('morseAnswer');
-    const feedback = document.getElementById('quizFeedback');
-    const quizContainer = document.getElementById('morseQuiz');
-    
-    if (!answerInput || !feedback) return;
-    
-    const userAnswer = answerInput.value.trim();
-    const correctAnswer = '.-.'; // Morse code for 'R' is ".-."
-    
-    if (userAnswer === correctAnswer || userAnswer === '. - .' || userAnswer === '.-.') {
-        feedback.textContent = 'Correct! You earned exactly 100 gems! 🎉';
-        feedback.style.color = '#005300';
-        
-        // Hide the quiz after correct answer
-        setTimeout(() => {
-            if (quizContainer) {
-                quizContainer.style.display = 'none';
-            }
-        }, 3000);
-        
-        // Add exactly 100 gems (not an easter egg) with one-time reward tracking
-        const result = await addGems(100, 'morse_quiz_reward');
-        
-        if (result.success) {
-          feedback.textContent = 'Correct! You earned exactly 100 gems! 🎉';
-        } else if (result.alreadyClaimed) {
-          feedback.textContent = 'You have already claimed this reward!';
-          feedback.style.color = '#ff8800';
-          
-          // Hide the quiz if already claimed
-          setTimeout(() => {
-            if (quizContainer) {
-              quizContainer.style.display = 'none';
-            }
-          }, 3000);
-        } else {
-          feedback.textContent = 'Error claiming reward. Please try again.';
-          feedback.style.color = '#ff4444';
+  const answerInput = document.getElementById('morseAnswer');
+  const feedback = document.getElementById('quizFeedback');
+  const quizContainer = document.getElementById('morseQuiz');
+
+  if (!answerInput || !feedback) return;
+
+  const userAnswer = answerInput.value.trim();
+  const correctAnswer = '.-.'; // Morse code for 'R' is ".-."
+
+  if (userAnswer === correctAnswer || userAnswer === '. - .' || userAnswer === '.-.') {
+    feedback.textContent = 'Correct! You earned exactly 100 gems! 🎉';
+    feedback.style.color = '#005300';
+
+    // Hide the quiz after correct answer
+    setTimeout(() => {
+      if (quizContainer) {
+        quizContainer.style.display = 'none';
+      }
+    }, 3000);
+
+    // Add exactly 100 gems (not an easter egg) with one-time reward tracking
+    const result = await addGems(100, 'morse_quiz_reward');
+
+    if (result.success) {
+      feedback.textContent = 'Correct! You earned exactly 100 gems! 🎉';
+    } else if (result.alreadyClaimed) {
+      feedback.textContent = 'You have already claimed this reward!';
+      feedback.style.color = '#ff8800';
+
+      // Hide the quiz if already claimed
+      setTimeout(() => {
+        if (quizContainer) {
+          quizContainer.style.display = 'none';
         }
+      }, 3000);
     } else {
-        feedback.textContent = 'Incorrect. Try again!';
-        feedback.style.color = '#ff4444';
-        
-        // Clear feedback after 2 seconds
-        setTimeout(() => {
-            feedback.textContent = '';
-        }, 2000);
+      feedback.textContent = 'Error claiming reward. Please try again.';
+      feedback.style.color = '#ff4444';
     }
+  } else {
+    feedback.textContent = 'Incorrect. Try again!';
+    feedback.style.color = '#ff4444';
+
+    // Clear feedback after 2 seconds
+    setTimeout(() => {
+      feedback.textContent = '';
+    }, 2000);
+  }
 }
 
 // Quiz is now always visible, no need for click event
@@ -737,26 +798,26 @@ const formatLeaderboardRow = (user, index, isCurrent = false) => {
 
 // Fetch current session user info
 let currentSessionUser = null;
-  const fetchCurrentUser = async () => {
-    // Retrieve the currently logged‑in user from the session endpoint.
-    // The endpoint returns { authenticated: Boolean, user: Object|null }.
-    // We store the user object (if any) in `currentSessionUser` for leaderboard highlighting.
-    try {
-      const res = await fetch('/api/session', { credentials: 'include' });
-      const data = await res.json();
-      // The API does not include an `ok` flag; use the presence of `user`.
-      if (data && data.user) {
-        currentSessionUser = data.user;
-        console.log('Fetched current user:', currentSessionUser);
-      } else {
-        currentSessionUser = null;
-        console.log('No authenticated user found');
-      }
-    } catch (e) {
-      console.error('Failed to fetch current user:', e);
+const fetchCurrentUser = async () => {
+  // Retrieve the currently logged‑in user from the session endpoint.
+  // The endpoint returns { authenticated: Boolean, user: Object|null }.
+  // We store the user object (if any) in `currentSessionUser` for leaderboard highlighting.
+  try {
+    const res = await fetch('/api/session', { credentials: 'include' });
+    const data = await res.json();
+    // The API does not include an `ok` flag; use the presence of `user`.
+    if (data && data.user) {
+      currentSessionUser = data.user;
+      console.log('Fetched current user:', currentSessionUser);
+    } else {
       currentSessionUser = null;
+      console.log('No authenticated user found');
     }
-  };
+  } catch (e) {
+    console.error('Failed to fetch current user:', e);
+    currentSessionUser = null;
+  }
+};
 
 const fetchLeaderboard = async () => {
   if (!leaderboardBody) return;
@@ -850,13 +911,13 @@ const addGems = async (amount, rewardId = null) => {
     if (rewardId) {
       body.rewardId = rewardId;
     }
-    
+
     const res = await fetch('/api/add-gems', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
     });
-    
+
     const data = await res.json();
     if (data && data.ok) {
       console.log(`Added ${amount} gems successfully`);

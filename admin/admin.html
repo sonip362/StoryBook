@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - StoryBook User Management</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Cormorant+Garamond:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="../dist/output.css" rel="stylesheet">
+    <script>
+        // Check for admin access before rendering
+        if (!sessionStorage.getItem('admin_access')) {
+            window.location.href = 'secret-code.html';
+        }
+    </script>
+    <style>
+        body {
+            background: radial-gradient(circle at center, #1a0505 0%, #05050a 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Cormorant Garamond', serif;
+        }
+        .admin-card {
+            background: rgba(10, 10, 15, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 120, 120, 0.2);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+            width: 100%;
+            max-width: 500px;
+            padding: 2.5rem;
+            border-radius: 1.5rem;
+        }
+        .form-label {
+            display: block;
+            color: #e5e7eb;
+            font-family: 'Cinzel', serif;
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.05em;
+        }
+        .form-input {
+            width: 100%;
+            background: rgba(235, 200, 200, 0.1);
+            border: 1px solid rgba(255, 120, 120, 0.3);
+            border-radius: 0.75rem;
+            padding: 0.75rem 1rem;
+            color: #fff;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            margin-bottom: 1.5rem;
+        }
+        .form-input:focus {
+            outline: none;
+            background: rgba(235, 200, 200, 0.2);
+            border-color: rgba(255, 120, 120, 0.6);
+            box-shadow: 0 0 0 3px rgba(255, 120, 120, 0.15);
+        }
+        .btn-submit {
+            width: 100%;
+            background: linear-gradient(135deg, #4a0404 0%, #8b0000 100%);
+            color: #fff;
+            font-family: 'Cinzel', serif;
+            font-weight: 700;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            border: 1px solid rgba(255, 120, 120, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(139, 0, 0, 0.4);
+            filter: brightness(1.1);
+        }
+        .btn-submit:active {
+            transform: translateY(0);
+        }
+        .status-msg {
+            margin-top: 1.5rem;
+            text-align: center;
+            font-size: 1rem;
+            min-height: 1.5rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .status-success { color: #4ade80; opacity: 1; }
+        .status-error { color: #f87171; opacity: 1; }
+    </style>
+</head>
+<body>
+    <div class="admin-card">
+        <h1 class="text-3xl font-bold mb-8 text-center text-white" style="font-family: 'Cinzel', serif; letter-spacing: 0.1em; color: #ffdbdb; text-shadow: 0 0 15px rgba(255, 120, 120, 0.4);">
+            Add New User
+        </h1>
+        
+        <form id="createUserForm">
+            <div>
+                <label for="name" class="form-label">Full Name</label>
+                <input type="text" id="name" name="name" class="form-input" placeholder="e.g. Vlad Tepes" required>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label for="rollNo" class="form-label">Roll Number</label>
+                    <input type="number" id="rollNo" name="rollNo" class="form-input" placeholder="e.g. 101" required>
+                </div>
+                <div>
+                    <label for="classSec" class="form-label">Class & Sec</label>
+                    <input type="text" id="classSec" name="classSec" class="form-input" placeholder="e.g. 10B" required>
+                </div>
+            </div>
+            
+            <div>
+                <label for="accessCode" class="form-label">Access Code</label>
+                <input type="text" id="accessCode" name="accessCode" class="form-input" placeholder="Manual Access Code" required>
+            </div>
+            
+            <button type="submit" class="btn-submit mt-4">
+                Create User
+            </button>
+        </form>
+        
+        <div id="statusMsg" class="status-msg"></div>
+    </div>
+
+    <script>
+        document.getElementById('createUserForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const statusMsg = document.getElementById('statusMsg');
+            statusMsg.textContent = 'Creating user...';
+            statusMsg.className = 'status-msg text-gray-400 opacity-100';
+
+            const formData = {
+                name: document.getElementById('name').value,
+                rollNo: document.getElementById('rollNo').value,
+                classSec: document.getElementById('classSec').value,
+                accessCode: document.getElementById('accessCode').value
+            };
+
+            try {
+                const response = await fetch('/api/admin/create-user', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    statusMsg.textContent = 'User created successfully!';
+                    statusMsg.className = 'status-msg status-success';
+                    document.getElementById('createUserForm').reset();
+                } else {
+                    statusMsg.textContent = data.error || 'Failed to create user.';
+                    statusMsg.className = 'status-msg status-error';
+                }
+            } catch (err) {
+                console.error('Error:', err);
+                statusMsg.textContent = 'Network error. Please try again.';
+                statusMsg.className = 'status-msg status-error';
+            }
+        });
+    </script>
+</body>
+</html>
