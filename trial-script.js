@@ -195,3 +195,46 @@ document.addEventListener('click', function firstPlay() {
   }
   document.removeEventListener('click', firstPlay);
 }, { once: true });
+
+// ===== Scroll Reveal Logic =====
+const initTrialScrollReveal = () => {
+  const observerOptions = {
+    threshold: 0.1,
+    rootMargin: '0px 0px -50px 0px'
+  };
+
+  const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('active');
+        revealObserver.unobserve(entry.target);
+      }
+    });
+  }, observerOptions);
+
+  // Target all meaningful content elements in trial
+  const selectors = [
+    '.castle-section p', 
+    '.castle-section img',
+    '.dracula-section p',
+    '.dracula-section img',
+    '.trial-cta-text',
+    '.trial-cta-btn'
+  ];
+
+  selectors.forEach(selector => {
+    document.querySelectorAll(selector).forEach(el => {
+      if (!el.closest('#loadingShield')) {
+        el.classList.add('reveal');
+        revealObserver.observe(el);
+      }
+    });
+  });
+};
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initTrialScrollReveal);
+} else {
+  initTrialScrollReveal();
+}
+

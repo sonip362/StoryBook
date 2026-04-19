@@ -301,6 +301,10 @@ if (storyHeader && scrollPage) {
 const castleImage = document.querySelector('.castle-image');
 const titleHotspot = document.querySelector('.title-hotspot');
 const batSfx = new Audio('./assests/bat.mp3');
+const dingSfx = new Audio('./assests/ding.mp3');
+dingSfx.preload = 'auto';
+dingSfx.volume = 0.7;
+
 const triggeredEggs = new Set();
 let tapTimestamps = [];
 let holdTimer = null;
@@ -327,9 +331,9 @@ if (bgMusic) {
 
 // ===== Page Locking System =====
 const lockSteps = [
-  { eggs: 1, gems: 100, desktopPercent: 0.30, mobilePercent: 0.28 },
+  { eggs: 1, gems: 100, desktopPercent: 0.26, mobilePercent: 0.40 },
   { eggs: 2, gems: 200, desktopPercent: 0.40, mobilePercent: 0.70 },
-  { eggs: 3, gems: 300, desktopPercent: 0.90, mobilePercent: 2.50 }
+  { eggs: 3, gems: 300, desktopPercent: 0.90, mobilePercent: 0.60 }
 ];
 
 const getOffsetTopWithin = (element, ancestor) => {
@@ -524,7 +528,8 @@ const showEggToast = (message) => {
   toast.classList.remove('show');
   void toast.offsetWidth;
   toast.classList.add('show');
-};
+}
+
 
 const showGemToast = (amount) => {
   const toast = document.createElement('div');
@@ -536,7 +541,12 @@ const showGemToast = (amount) => {
     <span>+${amount} GEMS</span>
   `;
   document.body.appendChild(toast);
-  setTimeout(() => toast.classList.add('show'), 100);
+  setTimeout(() => {
+    toast.classList.add('show');
+    dingSfx.currentTime = 0;
+    dingSfx.play().catch(e => console.log('Ding play failed:', e));
+  }, 100);
+
   setTimeout(() => {
     toast.classList.remove('show');
     setTimeout(() => toast.remove(), 500);
@@ -941,3 +951,153 @@ const updateGemCount = (gems) => {
     gemCountText.textContent = gems;
   }
 };
+
+// ===== Scroll Reveal Logic =====
+const initScrollReveal = () => {
+  const observerOptions = {
+    threshold: 0.1,
+    rootMargin: '0px 0px -50px 0px'
+  };
+
+  const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('active');
+        revealObserver.unobserve(entry.target);
+      }
+    });
+  }, observerOptions);
+
+  // Target all meaningful content elements
+  const selectors = [
+    '.castle-section p',
+    '.castle-section img',
+    '.dracula-section p',
+    '.dracula-section img',
+    '.dracula-story',
+    '.quiz-container',
+    '.dracula-row',
+    '.dracula-narrative'
+  ];
+
+  selectors.forEach(selector => {
+    document.querySelectorAll(selector).forEach(el => {
+      // Avoid fixed or already animated elements
+      if (!el.closest('#storyHeader') && !el.closest('#loadingShield')) {
+        el.classList.add('reveal');
+        revealObserver.observe(el);
+      }
+    });
+  });
+};
+
+// Initialize after content load
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initScrollReveal);
+} else {
+  initScrollReveal();
+}
+
+// ===== Draggable Key Easter Egg =====
+(() => {
+  const key = document.getElementById('draggableKey');
+  const door = document.getElementById('mysteriousDoor');
+  if (!key || !door) return;
+
+  let isDragging = false;
+  let startX, startY;
+  let initialLeft, initialTop;
+
+  // Store original fixed positions to snap back if needed
+  // Using fixed values that match the CSS initial state for consistency
+  const originBottom = 18;
+  const originLeftOffset = 22;
+
+  key.addEventListener('pointerdown', (e) => {
+    isDragging = true;
+    startX = e.clientX;
+    startY = e.clientY;
+    
+    const currentRect = key.getBoundingClientRect();
+    key.style.bottom = 'auto';
+    key.style.left = currentRect.left + 'px';
+    key.style.top = currentRect.top + 'px';
+    
+    initialLeft = currentRect.left;
+    initialTop = currentRect.top;
+    
+    key.setPointerCapture(e.pointerId);
+    key.style.transition = 'none';
+    key.style.zIndex = '1000';
+    key.style.transform = 'scale(1.2) rotate(15deg)';
+  });
+
+  key.addEventListener('pointermove', (e) => {
+    if (!isDragging) return;
+    
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    
+    key.style.left = (initialLeft + dx) + 'px';
+    key.style.top = (initialTop + dy) + 'px';
+  });
+
+  key.addEventListener('pointerup', (e) => {
+    if (!isDragging) return;
+    isDragging = false;
+    key.releasePointerCapture(e.pointerId);
+
+    const keyRect = key.getBoundingClientRect();
+    const doorRect = door.getBoundingClientRect();
+
+    // Check for overlap between the key and the door
+    const isOverDoor = (
+      keyRect.left < doorRect.right &&
+      keyRect.right > doorRect.left &&
+      keyRect.top < doorRect.bottom &&
+      keyRect.bottom > doorRect.top
+    );
+
+    if (isOverDoor) {
+      // Trigger Easter Egg
+      door.src = './assests/images/door-open.jpeg';
+      unlockEasterEgg('door_key_unlock');
+      
+      // Success animation for the key before it disappears
+      key.style.transition = 'all 0.5s ease-out';
+      key.style.transform = 'scale(0) rotate(360deg)';
+      key.style.opacity = '0';
+      
+      // Visual feedback on the door
+      door.style.transition = 'filter 0.5s ease';
+      door.style.filter = 'drop-shadow(0 0 30px rgba(255, 215, 0, 0.8))';
+      
+      setTimeout(() => {
+        key.style.display = 'none';
+        door.style.filter = '';
+      }, 1000);
+    } else {
+      // Snap back to original position
+      key.style.transition = 'all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+      key.style.transform = '';
+      
+      // We calculate where it should go back in the viewport
+      // to match bottom: 18px; left: 22px;
+      const targetLeft = originLeftOffset;
+      const targetTop = window.innerHeight - originBottom - key.offsetHeight;
+      
+      key.style.left = targetLeft + 'px';
+      key.style.top = targetTop + 'px';
+      
+      setTimeout(() => {
+        if (!isDragging) {
+          key.style.bottom = originBottom + 'px';
+          key.style.left = originLeftOffset + 'px';
+          key.style.top = 'auto';
+          key.style.transition = '';
+        }
+      }, 600);
+    }
+  });
+})();
+

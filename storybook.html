@@ -217,6 +217,11 @@
         Page 1
     </div>
 
+    <!-- Draggable Key for Easter Egg -->
+    <img id="draggableKey" src="./assests/images/key.png" alt="Key"
+        class="fixed bottom-[18px] left-[22px] z-[110] w-12 h-12 cursor-grab active:cursor-grabbing transition-transform hover:scale-110"
+        style="touch-action: none; filter: drop-shadow(0 0 10px rgba(245, 210, 192, 0.6));">
+
     <div class="page">
         <div class="scroll-container">
             <div class="storybook-shell">
@@ -240,7 +245,7 @@
 
                         <!-- Dracula Section -->
                         <div class="dracula-section">
-                            <div class="dracula-row">
+                            <div class="dracula-row dracula-row-mobile-reverse">
                                 <div style="flex: 1;">
                                     <p class="castle-text dracula-story">
                                         Prime Minister: Welcome Vlad the III
@@ -254,18 +259,26 @@
                                 </div>
                                 <div style="flex: 0 0 clamp(300px, 40%, 500px);">
                                     <img src="./assests/images/shake-hands.jpeg" alt="Shake Hands" class="dracula-image"
-                                        style="border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+                                        style=" box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
                                 </div>
                             </div>
 
                             <div class="dracula-narrative">
+                                <p class="castle-text dracula-story" style="text-align: center; margin-bottom: 20px;">
+                                    Vlad: So, What we will always conquer victory.
+                                    <br>
+                                    Vlad: Nobody can stop us.
+                                </p>
+                                <p class="castle-text dracula-story"
+                                    style="text-align: center; margin-bottom: 30px; font-family: 'Cinzel', serif; font-size: 1.75rem; font-weight: 700; color: #300000; letter-spacing: 0.8px;">
+                                    (Sweden's king came with a powerful troop and defeated Vlad's army. This caused a
+                                    huge loss to Vlad's Kingdom.)
+                                </p>
                                 <div class="war-image-container">
                                     <img id="draculaImg" src="./assests/images/war.png" alt="War" class="dracula-image">
                                 </div>
                                 <p class="castle-text dracula-story" style="text-align: center; margin-top: 20px;">
-                                    So, What we will always conquer victory.
-                                    <br>
-                                    Nobody can stop us.
+                                    Vlad: I stand straight, kill me but I will be back for revenge.
                                 </p>
                             </div>
 
@@ -289,6 +302,71 @@
                                 </button>
                                 <p id="quizFeedback"
                                     style="margin-top: 15px; color: #ffd700; font-family: 'Cinzel', serif; font-size: 0.9rem;">
+                                </p>
+
+                            </div>
+
+                            <!-- Final Section: New King-Castle -->
+                            <div class="dracula-row" style="margin-top: 60px;">
+                                <div style="flex: 0 0 clamp(300px, 45%, 600px);">
+                                    <img src="./assests/images/king-castle.jpeg" alt="King Castle" class="dracula-image"
+                                        style="box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+                                </div>
+                                <div style="flex: 1;">
+                                    <p class="castle-text dracula-story">
+                                        Sweden's king: Wow! What a beautiful palace! The intricate designs and
+                                        architecture is wonderful.
+                                        <br>
+                                        Minister: I agree sir. Respected Prime Minister the palace is now our's.
+                                        <br>
+                                        If you don't mind,this was once Vlan the III's palace.
+                                        <br>
+                                        Sweden's king: Vlad the III! Anyways, be ready with the soldiers tonight. I will
+                                        uncover all the mysteries and be the most powerful king. Hahahahahaha
+
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Door Section -->
+                            <div class="dracula-narrative" style="margin-top: 60px;">
+                                <div style="width: 100%; margin: 0 auto; ">
+                                    <img id="mysteriousDoor" src="./assests/images/door.png" alt="Mysterious Door"
+                                        style="width: 100%; height: auto; display: block;">
+                                </div>
+                                <p style="text-align: center; margin-bottom: 30px; font-family: 'Cinzel' , serif;
+                                        font-size: 1rem; font-weight: 700; color: #300000; letter-spacing: 0.8px;">
+
+                                    That day night:
+                                    <br>
+                                    (Sweden's king suddenly gets a burnt smell. He thinks that someone is
+                                    cooking and the food is burnt.)
+
+                                </p>
+                                <p class="castle-text dracula-story">
+                                    Sweden's king: Soldiers, Go find the source of the smell.
+                                    <br>
+                                    Soldiers: Sorry Sir. We checked the whole castle no one's cooking.
+                                    <br>
+                                    Sweden's king: At first burnt smell. Now this disgusting bats. Something is wrong in
+                                    here
+                                    <br>
+                                    Sweden's king: Soldiers, kill all the bats
+                                </p>
+                                <p style="text-align: center; margin-bottom: 30px; font-family: 'Cinzel' , serif;
+                                        font-size: 1rem; font-weight: 700; color: #300000; letter-spacing: 0.8px;">
+                                    (The soldiers kill the bats but even more comes)
+                                </p>
+                                <p class="castle-text dracula-story">
+                                    Sweden's king: What the!
+                                    <br>
+                                    Sweden's king: Let me move the next room.
+                                    <br>
+                                    Sweden's king: What a peaceful place! I will sllep here today.
+                                    <br>
+                                    Sweden's king: Soldiers, leave me alone and guard the castle and minister please
+                                    sleep the next room.
+
                                 </p>
                             </div>
                         </div>

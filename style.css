@@ -1,6 +1,22 @@
 @import "tailwindcss";
 
+/* ===== Scroll Reveal Animation ===== */
+.reveal {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+        transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    will-change: opacity, transform;
+}
+
+.reveal.active {
+    opacity: 1 !important;
+    transform: translateY(0);
+}
+
+
 /* ===== Custom Theme ===== */
+
 @theme {
     --font-cinzel: 'Cinzel', serif;
     --font-cormorant: 'Cormorant Garamond', serif;
@@ -319,7 +335,7 @@ body {
     --scroll-bottom-height-desktop: 300px;
 
     --scroll-top-height-mobile: 130px;
-    --scroll-middle-height-mobile: 2000px;
+    --scroll-middle-height-mobile: 3000px;
     --scroll-bottom-height-mobile: 210px;
 }
 
@@ -568,9 +584,13 @@ body {
     }
 
     .dracula-row {
-        flex-direction: column-reverse !important;
+        flex-direction: column !important;
         gap: 20px !important;
         align-items: center !important;
+    }
+
+    .dracula-row-mobile-reverse {
+        flex-direction: column-reverse !important;
     }
 
     .dracula-container {
