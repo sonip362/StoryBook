@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>StoryBook</title>
-    <link rel="shortcut icon" href="./assests/images/logo.png" type="image/x-icon">
+    <link rel="shortcut icon" href="./assests/images/logo.webp" type="image/x-icon">
     <link rel="stylesheet" href="./dist/output.css">
     <style>
         /* ===== Loading Shield (Preloader) ===== */
@@ -81,7 +81,55 @@
             color: rgba(200, 180, 160, 0.6);
             letter-spacing: 1px;
         }
+
+        /* ===== Modal Animations ===== */
+        #resetDataModal,
+        #alertModal {
+            display: none;
+        }
+
+        #resetDataModal.active,
+        #alertModal.active {
+            display: flex;
+            opacity: 1;
+            pointer-events: auto;
+            animation: modalFadeIn 0.3s ease-out;
+        }
+
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* Modal content base styling */
+        .modal-content-base {
+            background: linear-gradient(135deg, #f5d2c0 0%, #fae8db 100%);
+            color: #300000;
+        }
+
+        /* Button hover effects */
+        .modal-content-base button {
+            transition: all 0.2s ease;
+        }
+
+        .modal-content-base button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .modal-content-base button:active {
+            transform: translateY(0);
+        }
+
+    
     </style>
+
 </head>
 
 <body>
@@ -103,7 +151,7 @@
     </script>
     <!-- Background Music -->
     <audio id="bgMusic" loop preload="auto">
-        <source src="./assests/qr-bg-music.mp3" type="audio/mpeg">
+        <source src="./assests/calm.mp3" type="audio/mpeg">
     </audio>
 
     <!-- Header -->
@@ -159,6 +207,29 @@
                     d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
             </svg>
         </button>
+        <!-- Help Tutorial (Extra Option) -->
+        <button id="helpBtn" class="ml-2 p-2 rounded-full hover:bg-white/10 transition-all duration-300"
+            title="Help / Tutorial">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                stroke="currentColor" style="width:18px;height:18px;color:#daf0ff;filter:drop-shadow(0 0 4px rgba(102,194,255,0.3));">
+                <!-- Circle outline -->
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M12 2a10 10 0 100 20 10 10 0 000-20z" />
+                <!-- Question mark -->
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M12 8a1 1 0 110 2 1 1 0 010-2zm0 4a1 1 0 00-1 1v3a1 1 0 002 0v-3a1 1 0 00-1-1z" />
+            </svg>
+        </button>
+        <!-- Download PDF Button -->
+        <button id="downloadPdfBtn" class="ml-2 p-2 rounded-full hover:bg-white/10 transition-all duration-300"
+            title="Download as PDF">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                stroke="currentColor" style="width:18px;height:18px;color:#90ee90;filter:drop-shadow(0 0 4px rgba(144,238,144,0.3));">
+                <path d="M12 3V15" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M7 10L12 15L17 10" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M5 19H19"  stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </button>
     </header>
 
     <!-- Leaderboard Modal -->
@@ -179,6 +250,7 @@
             </div>
             <!-- Table Container -->
             <div class="max-h-[50vh] overflow-y-auto p-4 custom-scrollbar">
+           
                 <table class="w-full text-left font-serif border-separate border-spacing-y-2">
                     <thead class="text-[10px] uppercase tracking-[0.3em] font-bold opacity-50">
                         <tr>
@@ -200,6 +272,72 @@
             </div>
         </div>
     </div>
+    <!-- Help Tutorial Modal -->
+    <div id="helpModal"
+        class="fixed inset-0 z-[400] hidden bg-black/60 backdrop-blur-md flex items-center justify-center p-4 transition-all duration-500 opacity-0">
+        <div class="modal-content-base leaderboard-light rounded-[32px] w-full max-w-md overflow-hidden shadow-2xl">
+            <!-- Header -->
+            <div class="header-title px-8 py-7 flex justify-between items-center bg-black/5">
+                <h2 class="font-cinzel text-lg tracking-[0.25em]">How to Play</h2>
+                <button id="closeHelp" class="w-10 h-10 flex items-center justify-center rounded-full bg-black/10 text-black hover:bg-black/20 transition-all cursor-pointer">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                            d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <!-- Content -->
+            <div class="p-6 text-left font-cinzel text-sm" style="color:#642100;">
+                <ul class="list-disc pl-5 space-y-2">
+                    <li>Explore the page to discover hidden <strong>Easter Eggs</strong> </li>
+                    <li>Collect <strong>Gems</strong> by completing quizzes and finding eggs.</li>
+                    <li>Compete on the <strong>Leaderboard</strong> – higher EXP = higher rank.</li>
+                    <li>Unlock new stories by meeting requirements (e.g., enough gems or eggs).</li>
+                    <li>Use the <strong>Reset</strong> button to start over if needed.</li>
+                </ul>
+                <p class="mt-4" style="color:#000000;">Enjoy the adventure!</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Purchase Modal -->
+    <div id="confirmPurchaseModal"
+        class="fixed inset-0 z-[450] hidden bg-black/60 backdrop-blur-md flex items-center justify-center p-4 transition-all duration-500 opacity-0">
+        <div class="modal-content-base leaderboard-light rounded-[24px] w-full max-w-sm overflow-hidden shadow-2xl p-6 text-center">
+            <h3 class="font-cinzel text-lg mb-3">Reveal Answer</h3>
+            <p style="color:#642100; margin-bottom:18px;">Spend <strong>300</strong> gems to reveal the magic word and remove the bat. You must retain at least <strong>300</strong> gems after the purchase; the purchase will be blocked if your balance would fall below that.</p>
+            <div style="display:flex; gap:12px; justify-content:center;">
+                <button id="confirmPurchaseBtn" class="px-4 py-2 rounded-lg" style="background:#2a5a3a;color:#fff;font-family:'Cinzel',serif;">Confirm</button>
+                <button id="cancelPurchaseBtn" class="px-4 py-2 rounded-lg" style="background:#4b2a2a;color:#fff;font-family:'Cinzel',serif;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reset Data Confirmation Modal -->
+    <div id="resetDataModal"
+        class="fixed inset-0 z-[450] hidden bg-black/60 backdrop-blur-md flex items-center justify-center p-4 transition-all duration-500 opacity-0">
+        <div class="modal-content-base leaderboard-light rounded-[24px] w-full max-w-sm overflow-hidden shadow-2xl p-6 text-center">
+            <h3 class="font-cinzel text-lg mb-3" style="color:#833711;">Delete All Progress?</h3>
+            <p style="color:#642100; margin-bottom:18px;">Are you sure you want to delete all your progress? Your gems and discovered easter eggs will be reset to zero. <strong>This cannot be undone.</strong></p>
+            <div style="display:flex; gap:12px; justify-content:center;">
+                <button id="confirmResetBtn" class="px-4 py-2 rounded-lg" style="background:#8b3a1a;color:#fff;font-family:'Cinzel',serif;">Reset</button>
+                <button id="cancelResetBtn" class="px-4 py-2 rounded-lg" style="background:#4b4b4b;color:#fff;font-family:'Cinzel',serif;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error/Success Alert Modal -->
+    <div id="alertModal"
+        class="fixed inset-0 z-[450] hidden bg-black/60 backdrop-blur-md flex items-center justify-center p-4 transition-all duration-500 opacity-0">
+        <div class="modal-content-base leaderboard-light rounded-[24px] w-full max-w-sm overflow-hidden shadow-2xl p-6 text-center">
+            <h3 id="alertTitle" class="font-cinzel text-lg mb-3" style="color:#833711;">Alert</h3>
+            <p id="alertMessage" style="color:#642100; margin-bottom:18px;"></p>
+            <div style="display:flex; gap:12px; justify-content:center;">
+                <button id="alertOkBtn" class="px-6 py-2 rounded-lg" style="background:#5a4a3a;color:#fff;font-family:'Cinzel',serif;">OK</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Sound Toggle -->
     <button id="soundToggle" title="Toggle Music" aria-label="Mute background music"
@@ -218,7 +356,7 @@
     </div>
 
     <!-- Draggable Key for Easter Egg -->
-    <img id="draggableKey" src="./assests/images/key.png" alt="Key"
+    <img id="draggableKey" src="./assests/images/key.webp" alt="Key"
         class="fixed bottom-[18px] left-[22px] z-[110] w-12 h-12 cursor-grab active:cursor-grabbing transition-transform hover:scale-110"
         style="touch-action: none; filter: drop-shadow(0 0 10px rgba(245, 210, 192, 0.6));">
 
@@ -232,7 +370,7 @@
                     <div class="content-wrapper">
                         <!-- Castle Section -->
                         <div class="castle-section" style="overflow: hidden;">
-                            <img class="castle-image" src="./assests/images/dracula-castle-bg.png" alt="Dracula Castle">
+                            <img class="castle-image" src="./assests/images/dracula-castle-bg.webp" alt="Dracula Castle">
 
                             <p class="castle-text">Professor; Theres no ghost nor Dracula. Its just an old castle.,The
                                 teacher said.
@@ -258,7 +396,7 @@
                                     </p>
                                 </div>
                                 <div style="flex: 0 0 clamp(300px, 40%, 500px);">
-                                    <img src="./assests/images/shake-hands.jpeg" alt="Shake Hands" class="dracula-image"
+                                    <img src="./assests/images/shake-hands.webp" alt="Shake Hands" class="dracula-image"
                                         style=" box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
                                 </div>
                             </div>
@@ -275,7 +413,7 @@
                                     huge loss to Vlad's Kingdom.)
                                 </p>
                                 <div class="war-image-container">
-                                    <img id="draculaImg" src="./assests/images/war.png" alt="War" class="dracula-image">
+                                    <img id="draculaImg" src="./assests/images/war.webp" alt="War" class="dracula-image">
                                 </div>
                                 <p class="castle-text dracula-story" style="text-align: center; margin-top: 20px;">
                                     Vlad: I stand straight, kill me but I will be back for revenge.
@@ -306,10 +444,12 @@
 
                             </div>
 
+                        
+
                             <!-- Final Section: New King-Castle -->
                             <div class="dracula-row" style="margin-top: 60px;">
                                 <div style="flex: 0 0 clamp(300px, 45%, 600px);">
-                                    <img src="./assests/images/king-castle.jpeg" alt="King Castle" class="dracula-image"
+                                    <img src="./assests/images/king-castle.webp" alt="King Castle" class="dracula-image"
                                         style="box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
                                 </div>
                                 <div style="flex: 1;">
@@ -331,7 +471,7 @@
                             <!-- Door Section -->
                             <div class="dracula-narrative" style="margin-top: 60px;">
                                 <div style="width: 100%; margin: 0 auto; ">
-                                    <img id="mysteriousDoor" src="./assests/images/door.png" alt="Mysterious Door"
+                                    <img id="mysteriousDoor" src="./assests/images/door.webp" alt="Mysterious Door"
                                         style="width: 100%; height: auto; display: block;">
                                 </div>
                                 <p style="text-align: center; margin-bottom: 30px; font-family: 'Cinzel' , serif;
@@ -362,12 +502,96 @@
                                     <br>
                                     Sweden's king: Let me move the next room.
                                     <br>
-                                    Sweden's king: What a peaceful place! I will sllep here today.
+                                    Sweden's king: What a peaceful place! I will sleep here today.
                                     <br>
                                     Sweden's king: Soldiers, leave me alone and guard the castle and minister please
                                     sleep the next room.
 
                                 </p>
+                                
+                                <!-- Bat easter egg section -->
+                                <div id="batEasterEgg" style="position: relative; margin: 20px 0; text-align: center;">
+                                    <img id="batImage" src="./assests/images/bat.webp" alt="Bat" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; z-index: 1500; pointer-events: none;">
+                                    <p style="text-align: center; margin: 15px 0; font-family: 'Cinzel', serif; font-size: 1rem; color: #300000; letter-spacing: 0.8px;">
+                                        A bat is flying around the room. Maybe there's a way to make it disappear?
+                                        <br>
+                                        (Hint-1 : Try entering the magic word Dracula is scared of ...)
+                                        <br>
+                                        (Hint-2 : The new language we learnt but in english...)
+                                    </p>
+                                    <div style="margin: 20px auto; max-width: 360px; display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap;">
+                                        <input type="text" id="batRemovalInput" placeholder="Enter the magic word..." style="padding: 10px 15px; border: 2px solid rgba(245, 210, 192, 0.3); 
+                                              background: rgba(15, 10, 5, 0.8); color: #fc7532; 
+                                              border-radius: 8px; font-family: monospace; font-size: 1rem;
+                                              text-align: center; width: 200px; margin-bottom: 10px;"
+                                            onkeypress="if(event.key === 'Enter') removeBat()">
+                                        <button id="removeBatBtn" onclick="removeBat()" style="padding: 10px 16px; 
+                                               background: rgba(90, 33, 4, 0.603); 
+                                               border: 1px solid rgb(54, 18, 0); 
+                                               color: #702500; border-radius: 8px; 
+                                               cursor: pointer; font-family: 'Cinzel', serif;">
+                                            Remove Bat
+                                        </button>
+                                        <button id="buyAnswerBtn" onclick="buyAnswerWithGems()" style="padding: 10px 12px; 
+                                               background: linear-gradient(135deg,#0b486b,#3b8d99); color:#fff; border-radius:8px; border:1px solid rgba(255,255,255,0.06); font-family:'Cinzel', serif; cursor:pointer;">
+                                            Unlock answer (300 gems)
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- White flash effect overlay -->
+                                  <div id="whiteFlash" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+                                      background-color: rgb(255, 249, 249); z-index: 2000; display: none;"></div>
+                                
+                                <!-- Crossword Puzzle Section -->
+                        <div id="crosswordSection" class="quiz-container dracula-quiz" style="display:none; text-align: center; margin-top: 2rem;">
+                            <h3 class="font-cinzel text-lg" style="color:#833711; margin-bottom: 1rem;">Crossword Puzzle</h3>
+                            <div style="margin-bottom: 1rem; text-align: left; display: inline-block; max-width: 300px;">
+                                <p><strong>Across 1:</strong> One who cooks?</p>
+                                <p><strong>Down 1:</strong> So, what we will always _______ victory.</p>
+                            </div>
+                            <!-- Simple 4x7 grid: CHEF across row1, CONQUER down column1 -->
+                            <table id="crosswordGrid" style="margin: 0 auto; border-collapse: collapse;">
+                                <tbody>
+                                    <!-- Row 1: CHEF across (4 cells) -->
+                                    <tr>
+                                        <td><input type="text" maxlength="1" id="cell-1-1" value="C" readonly style="width:30px;height:30px;text-align:center;font-size:1.2rem;"/></td>
+                                        <td><input type="text" maxlength="1" id="cell-1-2" style="width:30px;height:30px;text-align:center;font-size:1.2rem;"/></td>
+                                        <td><input type="text" maxlength="1" id="cell-1-3" style="width:30px;height:30px;text-align:center;font-size:1.2rem;"/></td>
+                                        <td><input type="text" maxlength="1" id="cell-1-4" style="width:30px;height:30px;text-align:center;font-size:1.2rem;"/></td>
+                                    </tr>
+                                    <!-- Rows 2-7: only column 1 for CONQUER down, other cells blocked -->
+                                    <tr>
+                                        <td><input type="text" maxlength="1" id="cell-2-1" style="width:30px;height:30px;text-align:center;font-size:1.2rem;"/></td>
+                                        <td class="blocked"></td><td class="blocked"></td><td class="blocked"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><input type="text" maxlength="1" id="cell-3-1" style="width:30px;height:30px;text-align:center;font-size:1.2rem;"/></td>
+                                        <td class="blocked"></td><td class="blocked"></td><td class="blocked"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><input type="text" maxlength="1" id="cell-4-1" style="width:30px;height:30px;text-align:center;font-size:1.2rem;"/></td>
+                                        <td class="blocked"></td><td class="blocked"></td><td class="blocked"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><input type="text" maxlength="1" id="cell-5-1" style="width:30px;height:30px;text-align:center;font-size:1.2rem;"/></td>
+                                        <td class="blocked"></td><td class="blocked"></td><td class="blocked"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><input type="text" maxlength="1" id="cell-6-1" style="width:30px;height:30px;text-align:center;font-size:1.2rem;"/></td>
+                                        <td class="blocked"></td><td class="blocked"></td><td class="blocked"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><input type="text" maxlength="1" id="cell-7-1" style="width:30px;height:30px;text-align:center;font-size:1.2rem;"/></td>
+                                        <td class="blocked"></td><td class="blocked"></td><td class="blocked"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <button id="checkCrosswordBtn" style="margin-top:0.8rem;padding: 6px 12px; background:#5a2104; color:#fff; border:none; border-radius:4px; cursor:pointer;">
+                                Check Answers
+                            </button>
+                            <p id="crosswordFeedback" style="margin-top: 0.5rem; color:#ffd700; font-family:'Cinzel',serif;"></p>
+                        </div>
                             </div>
                         </div>
                     </div>
@@ -443,10 +667,10 @@
             class="fixed inset-0 z-[300] hidden bg-black/30 backdrop-blur-md transition-all duration-500">
             <div id="modalContent"
                 class="modal-content-base w-[92vw] max-w-[480px] aspect-[9/16] md:aspect-[4/5] bg-white rounded-[40px] p-2 shadow-[0_35px_80px_-15px_rgba(0,0,0,0.5)] border-[8px] border-white">
-                <div class="relative w-full h-full rounded-[32px] overflow-hidden bg-gray-100">
-                    <video id="modalVideo" class="w-full h-full object-cover" playsinline>
-                        <source src="./assests/images/dracula.mp4" type="video/mp4">
-                    </video>
+                <div class="relative w-full h-full rounded-[32px] overflow-hidden bg-gray-100 flex items-center justify-center">
+                    <p class="text-center text-black font-cinzel text-lg px-4">
+                        Secret message: You are a donkey. LOL . Atleast you found the easter egg! Congrats!
+                    </p>
                     <!-- Close Button -->
                     <button id="closeModal" title="Close"
                         class="absolute top-4 right-4 w-10 h-10 flex items-center justify-center rounded-full bg-white/90 text-black shadow-xl hover:bg-red-50 hover:scale-110 transition-all duration-300 cursor-pointer z-[310]">
@@ -464,8 +688,6 @@
         </div>
 
         <script src="./script.js"></script>
-
-
 </body>
 
 </html>

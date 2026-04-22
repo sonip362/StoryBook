@@ -302,8 +302,118 @@ const castleImage = document.querySelector('.castle-image');
 const titleHotspot = document.querySelector('.title-hotspot');
 const batSfx = new Audio('./assests/bat.mp3');
 const dingSfx = new Audio('./assests/ding.mp3');
+const whooshSfx = new Audio('./assests/whoosh.mp3');
+whooshSfx.preload = 'auto';
+whooshSfx.volume = 0.9;
 dingSfx.preload = 'auto';
 dingSfx.volume = 0.7;
+
+// ===== Bat disappearance persistence =====
+const BAT_FLAG = 'egg_bat_disappeared';
+function applyBatRemovedState() {
+  const removed = localStorage.getItem(BAT_FLAG) === 'true';
+  const batImg = document.getElementById('batImage');
+  const batSection = document.getElementById('batEasterEgg');
+  if (removed) {
+    if (batImg) batImg.style.display = 'none';
+    if (batSection) batSection.innerHTML = '<p style="font-family: \'Cinzel\', serif; color:#005300; text-align:center;">The bat has disappeared! 🎉</p>';
+  }
+}
+function setBatRemovedPersistent() {
+  try { localStorage.setItem(BAT_FLAG, 'true'); } catch (e) { /* ignore */ }
+}
+// Apply on script load
+applyBatRemovedState();
+
+// ===== Paid unlock helper (300 gems) =====
+// Show confirmation modal before purchasing the answer
+function buyAnswerWithGems() {
+  const COST = 300;
+  const MIN_RESERVE = 300;
+  const gemCountText = document.getElementById('gemCountText');
+  const modal = document.getElementById('confirmPurchaseModal');
+  if (!modal || !gemCountText) return;
+
+  const available = parseInt(gemCountText.textContent || '0', 10) || 0;
+  if (available < COST + MIN_RESERVE) {
+    showEggToast(`Not enough gems. You must keep at least ${MIN_RESERVE} gems after purchase.`);
+    return;
+  }
+
+  modal.classList.remove('hidden');
+  // show (remove opacity-0)
+  modal.classList.remove('opacity-0');
+  modal.classList.add('opacity-100');
+
+  const onCancel = () => {
+    modal.classList.add('opacity-0');
+    setTimeout(() => modal.classList.add('hidden'), 300);
+    cleanup();
+  };
+
+  const onConfirm = async () => {
+    cleanup();
+    modal.classList.add('opacity-0');
+    setTimeout(() => modal.classList.add('hidden'), 300);
+    await performPurchaseUnlock();
+  };
+
+  const cleanup = () => {
+    const cancelBtn = document.getElementById('cancelPurchaseBtn');
+    const confirmBtn = document.getElementById('confirmPurchaseBtn');
+    if (cancelBtn) cancelBtn.removeEventListener('click', onCancel);
+    if (confirmBtn) confirmBtn.removeEventListener('click', onConfirm);
+  };
+
+  const cancelBtn = document.getElementById('cancelPurchaseBtn');
+  const confirmBtn = document.getElementById('confirmPurchaseBtn');
+  if (cancelBtn) cancelBtn.addEventListener('click', onCancel);
+  if (confirmBtn) confirmBtn.addEventListener('click', onConfirm);
+}
+
+async function performPurchaseUnlock() {
+  const COST = 300;
+  const gemCountText = document.getElementById('gemCountText');
+  const input = document.getElementById('batRemovalInput');
+  const batSection = document.getElementById('batEasterEgg');
+  if (!gemCountText || !input || !batSection) return;
+
+  const available = parseInt(gemCountText.textContent || '0', 10) || 0;
+  const MIN_RESERVE = 300;
+  if (available < COST + MIN_RESERVE) {
+    showEggToast(`Not enough gems. You must keep at least ${MIN_RESERVE} gems after purchase.`);
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/easter-eggs/purchase-unlock', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ eggId: 'bat_disappearance', cost: COST })
+    });
+    const payload = await res.json().catch(() => null);
+    if (res.ok && payload?.ok) {
+      // Update UI from server state
+      updateEggCounter();
+      input.value = 'prakashah';
+      removeBat();
+      return;
+    }
+    // If server rejected (e.g., insufficient gems), show message
+    showEggToast(payload?.error || 'Purchase failed.');
+  } catch (err) {
+    // Fallback to local deduction if server unreachable
+    const newVal = Math.max(0, available - COST);
+    gemCountText.textContent = String(newVal);
+    try { setBatRemovedPersistent(); } catch (e) {}
+    input.value = 'prakashah';
+    showEggToast('Answer unlocked for 300 gems (offline)');
+    removeBat();
+  }
+}
+
+// Expose for inline handler
+window.buyAnswerWithGems = buyAnswerWithGems;
 
 const triggeredEggs = new Set();
 let tapTimestamps = [];
@@ -471,6 +581,43 @@ window.addEventListener('resize', () => {
 
 document.querySelector('.page')?.addEventListener('scroll', handlePageScroll);
 
+// ===== Scroll Bottom Tap Toggle =====
+// Hide only the bottom when tapped; register easter egg with the server
+const scrollBottom = document.querySelector('.scroll-bottom');
+const scrollTop = document.querySelector('.scroll-top');
+let bottomHidden = false;
+if (scrollBottom) {
+  scrollBottom.addEventListener('click', () => {
+    bottomHidden = !bottomHidden;
+    if (bottomHidden) {
+      scrollBottom.style.display = 'none';
+      // Reveal crossword when bottom is tapped
+      const crossword = document.getElementById('crosswordSection');
+      if (crossword) crossword.style.display = '';
+      // Register easter egg via endpoint (non-blocking)
+      setTimeout(() => {
+        if (typeof unlockEasterEgg === 'function') unlockEasterEgg('scroll_bottom_tap');
+        else console.warn('unlockEasterEgg not available yet');
+      }, 0);
+    } else {
+      scrollBottom.style.display = '';
+      // Hide crossword when bottom is restored
+      const crossword = document.getElementById('crosswordSection');
+      if (crossword) crossword.style.display = 'none';
+    }
+  });
+}
+
+// If user taps the top area while bottom is hidden, restore the bottom
+if (scrollTop) {
+  scrollTop.addEventListener('click', () => {
+    if (bottomHidden) {
+      bottomHidden = false;
+      if (scrollBottom) scrollBottom.style.display = '';
+    }
+  });
+}
+
 // ===== Easter Egg Counter =====
 const eggCountText = document.getElementById('eggCountText');
 
@@ -576,6 +723,84 @@ const unlockEasterEgg = async (eggId) => {
   }
 };
 
+async function removeBat() {
+  console.log('removeBat invoked');
+  const input = document.getElementById('batRemovalInput');
+  const batImg = document.getElementById('batImage');
+  const batSection = document.getElementById('batEasterEgg');
+
+  if (!input || !batImg || !batSection) {
+    console.warn('Bat removal elements missing');
+    return;
+  }
+
+  // Ensure shake keyframes exist
+  if (!document.getElementById('bat-shake-style')) {
+    const s = document.createElement('style');
+    s.id = 'bat-shake-style';
+    s.textContent = `@keyframes bat-shake { 0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)} }`;
+    document.head.appendChild(s);
+  }
+
+  const entered = input.value.trim().toLowerCase();
+  const correct = 'prakashah';
+
+  // Message element (first paragraph in the bat section)
+  const msgEl = batSection.querySelector('p');
+  if (entered === correct) {
+    // Create a full-screen flash overlay appended to body to avoid stacking/context issues
+    const overlay = document.createElement('div');
+    overlay.id = 'batFlashOverlay';
+    Object.assign(overlay.style, {
+      position: 'fixed',
+      inset: '0',
+      width: '100vw',
+      height: '100vh',
+      background: '#fff',
+      zIndex: '99999'
+    });
+    document.body.appendChild(overlay);
+    // Play whoosh sound when the flash appears
+    if (typeof whooshSfx !== 'undefined') {
+      whooshSfx.currentTime = 0;
+      whooshSfx.play().catch((err) => console.log('Whoosh sound play failed:', err));
+    }
+
+    // Keep flash visible for 0.5s, then remove overlay and hide the bat
+    setTimeout(() => {
+      // Remove overlay
+      overlay.remove();
+      // Hide bat image
+      batImg.style.display = 'none';
+      // Replace section with success message
+      batSection.innerHTML = '<p style="font-family: \'Cinzel\', serif; color:#005300; text-align:center;">The bat has disappeared! 🎉</p>';
+      // Persist state so the bat does not reappear on reload
+      try { setBatRemovedPersistent(); } catch (e) { /* ignore */ }
+      // Unlock easter egg on the server
+      unlockEasterEgg('bat_disappearance');
+    }, 500);
+  } else {
+    // Incorrect word – visual shake + inline error message
+    input.style.animation = 'bat-shake 0.5s';
+    // Show temporary error message
+    if (msgEl) {
+      const original = msgEl.textContent;
+      msgEl.textContent = 'Incorrect word. Try again.';
+      msgEl.style.color = '#ff4444';
+      setTimeout(() => {
+        msgEl.textContent = original;
+        msgEl.style.color = '#300000';
+      }, 1500);
+    }
+    setTimeout(() => {
+      input.style.animation = '';
+    }, 500);
+  }
+}
+
+// Expose globally for inline HTML handlers
+window.removeBat = removeBat;
+
 // ===== Castle triple-tap easter egg =====
 batSfx.preload = 'auto';
 batSfx.volume = 0.9;
@@ -631,7 +856,6 @@ if (titleHotspot) {
 const draculaImg = document.getElementById('draculaImg');
 const videoModal = document.getElementById('videoModal');
 const modalContent = document.getElementById('modalContent');
-const modalVideo = document.getElementById('modalVideo');
 const closeModal = document.getElementById('closeModal');
 
 let comboState = 0; // 0: Idle, 1: Tapped once, 2: Held successfully
@@ -645,19 +869,17 @@ const resetDraculaCombo = () => {
 
 // Function to close modal
 const closeDraculaModal = () => {
-  if (videoModal && modalContent && modalVideo) {
+  if (videoModal && modalContent) {
     modalContent.classList.remove('modal-show');
     // Wait for animation to finish before hiding container
     setTimeout(() => {
       videoModal.classList.add('hidden');
       videoModal.classList.remove('flex');
-      modalVideo.pause();
-      modalVideo.currentTime = 0;
     }, 500);
   }
 };
 
-if (draculaImg && videoModal && modalContent && modalVideo) {
+if (draculaImg && videoModal && modalContent) {
   draculaImg.addEventListener('pointerdown', (e) => {
     draculaHoldStart = Date.now();
     if (comboState === 1) {
@@ -685,7 +907,6 @@ if (draculaImg && videoModal && modalContent && modalVideo) {
         requestAnimationFrame(() => {
           modalContent.classList.add('modal-show');
         });
-        modalVideo.play();
         unlockEasterEgg('dracula_gesture_tap_hold_tap');
         resetDraculaCombo();
       } else {
@@ -705,9 +926,6 @@ if (draculaImg && videoModal && modalContent && modalVideo) {
   if (closeModal) {
     closeModal.addEventListener('click', closeDraculaModal);
   }
-
-  // Close modal when video ends
-  modalVideo.onended = closeDraculaModal;
 
   // Close modal when clicking outside content area
   videoModal.addEventListener('click', (e) => {
@@ -765,6 +983,50 @@ async function checkMorseAnswer() {
       feedback.textContent = '';
     }, 2000);
   }
+}
+
+// ===== Crossword Puzzle Functionality =====
+async function checkCrosswordAnswers() {
+  const feedback = document.getElementById('crosswordFeedback');
+  if (!feedback) return;
+
+  // Gather letters from the grid
+  const getCell = (r, c) => {
+    const el = document.getElementById(`cell-${r}-${c}`);
+    return el ? el.value.trim().toUpperCase() : '';
+  };
+
+  // Across word (row 1, cols 1-4) should be CHEF (first cell prefilled with C)
+  const across = [1, 2, 3, 4].map(col => getCell(1, col)).join('');
+  // Down word (col 1, rows 1-7) should be CONQUER (first cell is C from across)
+  const down = [1, 2, 3, 4, 5, 6, 7].map(row => getCell(row, 1)).join('');
+
+  const correctAcross = 'CHEF';
+  const correctDown = 'CONQUER';
+
+  if (across === correctAcross && down === correctDown) {
+    feedback.textContent = 'Correct! You earned 200 gems! 🎉';
+    feedback.style.color = '#005300';
+    const result = await addGems(200, 'crossword_reward');
+    if (!result.success && result.alreadyClaimed) {
+      feedback.textContent = 'You have already claimed this reward!';
+      feedback.style.color = '#ff8800';
+    }
+    // Hide crossword after success
+    setTimeout(() => {
+      const section = document.getElementById('crosswordSection');
+      if (section) section.style.display = 'none';
+    }, 3000);
+  } else {
+    feedback.textContent = 'Incorrect. Try again!';
+    feedback.style.color = '#ff4444';
+  }
+}
+
+// Attach event listener for crossword button
+const checkCrosswordBtn = document.getElementById('checkCrosswordBtn');
+if (checkCrosswordBtn) {
+  checkCrosswordBtn.addEventListener('click', checkCrosswordAnswers);
 }
 
 // Quiz is now always visible, no need for click event
@@ -885,9 +1147,58 @@ if (leaderboardModal) {
 
 // ===== Reset Data Logic =====
 const resetDataBtn = document.getElementById('resetDataBtn');
+const resetDataModal = document.getElementById('resetDataModal');
+const confirmResetBtn = document.getElementById('confirmResetBtn');
+const cancelResetBtn = document.getElementById('cancelResetBtn');
+const alertModal = document.getElementById('alertModal');
+const alertTitle = document.getElementById('alertTitle');
+const alertMessage = document.getElementById('alertMessage');
+const alertOkBtn = document.getElementById('alertOkBtn');
+
+// Helper function to show alert modal
+function showAlertModal(title, message) {
+  return new Promise((resolve) => {
+    alertTitle.textContent = title;
+    alertMessage.textContent = message;
+    alertModal.classList.add('active');
+    
+    const handleClose = () => {
+      alertModal.classList.remove('active');
+      alertOkBtn.removeEventListener('click', handleClose);
+      resolve();
+    };
+    
+    alertOkBtn.addEventListener('click', handleClose);
+  });
+}
+
+// Helper function to show reset confirmation modal
+function showResetConfirmModal() {
+  return new Promise((resolve) => {
+    resetDataModal.classList.add('active');
+    
+    const handleConfirm = async () => {
+      resetDataModal.classList.remove('active');
+      confirmResetBtn.removeEventListener('click', handleConfirm);
+      cancelResetBtn.removeEventListener('click', handleCancel);
+      resolve(true);
+    };
+    
+    const handleCancel = () => {
+      resetDataModal.classList.remove('active');
+      confirmResetBtn.removeEventListener('click', handleConfirm);
+      cancelResetBtn.removeEventListener('click', handleCancel);
+      resolve(false);
+    };
+    
+    confirmResetBtn.addEventListener('click', handleConfirm);
+    cancelResetBtn.addEventListener('click', handleCancel);
+  });
+}
+
 if (resetDataBtn) {
   resetDataBtn.addEventListener('click', async () => {
-    const confirmed = confirm("Are you sure you want to delete all your progress? Your gems and discovered easter eggs will be reset to zero. This cannot be undone.");
+    const confirmed = await showResetConfirmModal();
 
     if (confirmed) {
       try {
@@ -904,13 +1215,47 @@ if (resetDataBtn) {
             window.location.reload();
           }, 1500);
         } else {
-          alert("Failed to reset data: " + (data.error || "Unknown error"));
+          await showAlertModal("Reset Failed", "Failed to reset data: " + (data.error || "Unknown error"));
         }
       } catch (err) {
         console.error("Reset error:", err);
-        alert("An error occurred while resetting your data.");
+        await showAlertModal("Error", "An error occurred while resetting your data.");
       }
     }
+  });
+}
+
+// ===== Help Tutorial Logic =====
+const helpBtn = document.getElementById('helpBtn');
+const helpModal = document.getElementById('helpModal');
+const closeHelp = document.getElementById('closeHelp');
+
+const showHelp = () => {
+  if (!helpModal) return;
+  const content = helpModal.querySelector('.modal-content-base');
+  helpModal.classList.remove('hidden');
+  helpModal.classList.add('flex');
+  if (content) content.classList.add('modal-show');
+  // Fade in background overlay
+  setTimeout(() => helpModal.classList.add('opacity-100'), 10);
+};
+
+const hideHelp = () => {
+  if (!helpModal) return;
+  const content = helpModal.querySelector('.modal-content-base');
+  helpModal.classList.remove('opacity-100');
+  if (content) content.classList.remove('modal-show');
+  setTimeout(() => {
+    helpModal.classList.add('hidden');
+    helpModal.classList.remove('flex');
+  }, 500);
+};
+
+if (helpBtn) helpBtn.addEventListener('click', showHelp);
+if (closeHelp) closeHelp.addEventListener('click', hideHelp);
+if (helpModal) {
+  helpModal.addEventListener('click', (e) => {
+    if (e.target === helpModal) hideHelp();
   });
 }
 
@@ -1060,7 +1405,7 @@ if (document.readyState === 'loading') {
 
     if (isOverDoor) {
       // Trigger Easter Egg
-      door.src = './assests/images/door-open.jpeg';
+      door.src = './assests/images/door-open.webp';
       unlockEasterEgg('door_key_unlock');
       
       // Success animation for the key before it disappears
@@ -1099,5 +1444,17 @@ if (document.readyState === 'loading') {
       }, 600);
     }
   });
+
+
 })();
+
+// ===== PDF Download Button =====
+document.getElementById('downloadPdfBtn')?.addEventListener('click', function() {
+    const link = document.createElement('a');
+    link.href = './storybook.pdf';
+    link.download = 'storybook.pdf';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+});
 

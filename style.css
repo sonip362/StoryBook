@@ -293,29 +293,19 @@ body {
     margin: 0;
     min-height: 100vh;
     overflow: hidden;
-    overflow: hidden;
-    background: #c4a484;
-    overflow: hidden;
+    background: #E1C697;
+     /* Light parchment background */
 }
 
 .page {
     width: 100vw;
-    height: 100vh;
+    min-height: 100vh;
+    height: 100%;
     overflow-y: auto;
     scrollbar-width: none;
     -ms-overflow-style: none;
-}
-
-.page::-webkit-scrollbar {
-    display: none;
-}
-
-.page {
-    width: 100vw;
-    height: 100vh;
-    overflow-y: auto;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 .page::-webkit-scrollbar {
@@ -326,6 +316,7 @@ body {
     width: 100vw;
     min-height: 100vh;
     min-height: calc(var(--app-vh, 1vh) * 100);
+    margin-top: env(safe-area-inset-top, 0px);
 }
 
 /* Manual controls */
@@ -351,20 +342,32 @@ body {
     position: relative;
     height: var(--scroll-top-height-desktop);
     flex: 0 0 var(--scroll-top-height-desktop);
-    background: url('/assests/images/storybook-top.jpg') center top / 100% 100% no-repeat;
+    background: url('/assests/images/storybook-top.webp') center top / 100% 100% no-repeat;
+    cursor: pointer;
 }
 
 .scroll-middle {
     position: relative;
     min-height: var(--scroll-middle-height-desktop);
     flex: 1 0 auto;
-    background: url('/assests/images/storybook-middle.jpg') center top / 100% auto repeat-y;
+    background: url('/assests/images/storybook-middle.webp') center top / 100% auto repeat-y;
+}
+
+/* Collapse the scroll-middle when hidden */
+.scroll-middle.collapsed {
+    min-height: 0 !important;
+    height: 0 !important;
+    flex: 0 0 0 !important;
+    overflow: hidden;
+    display: none !important;
+    background: none !important;
 }
 
 .scroll-bottom {
     height: var(--scroll-bottom-height-desktop);
     flex: 0 0 var(--scroll-bottom-height-desktop);
-    background: url('/assests/images/storybook-end.jpg') center bottom / 100% 100% no-repeat;
+    background: url('/assests/images/storybook-end.webp') center bottom / 100% 100% no-repeat;
+    cursor: pointer;
 }
 
 .content-wrapper {
@@ -384,7 +387,7 @@ body {
     height: auto;
     max-width: 100%;
     margin: -34px 30px 12px 0;
-    shape-outside: url('../assests/images/dracula-castle-bg.png');
+    shape-outside: url('../assests/images/dracula-castle-bg.webp');
     shape-margin: 18px;
     shape-image-threshold: 0.35;
 }
@@ -512,6 +515,11 @@ body {
         --scroll-top-height-desktop: var(--scroll-top-height-mobile);
         --scroll-middle-height-desktop: var(--scroll-middle-height-mobile);
         --scroll-bottom-height-desktop: var(--scroll-bottom-height-mobile);
+    }
+    
+    .page {
+        padding-top: max(env(safe-area-inset-top, 0px), 20px);
+        padding-bottom: max(env(safe-area-inset-bottom, 0px), 20px);
     }
 
     .egg-toast {
@@ -657,6 +665,38 @@ body {
     transform: scale(0.95);
     opacity: 0;
     transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+/* ===== Help Modal Transitions (mirrors leaderboard) ===== */
+#helpModal.opacity-100 .modal-content-base {
+    transform: scale(1);
+    opacity: 1;
+}
+
+#helpModal .modal-content-base {
+    /* Centered positioning and always visible; override generic modal positioning */
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    bottom: auto;
+    right: auto;
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    z-index: 500;
+}
+
+/* Override generic modal-show for help modal to keep centered */
+#helpModal .modal-content-base.modal-show {
+    transform: translate(-50%, -50%) scale(1) !important;
+    opacity: 1 !important;
+}
+
+/* Center the help modal when visible */
+#helpModal.opacity-100 .modal-content-base.modal-show {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(1) !important;
 }
 
 /* ===== Page Locking System ===== */
@@ -822,6 +862,84 @@ body {
     }
 }
 
+/* ===== Reset Data & Alert Modals ===== */
+#resetDataModal,
+#alertModal {
+    position: fixed;
+    inset: 0;
+    z-index: 450;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease-out;
+}
+
+#resetDataModal.active,
+#alertModal.active {
+    display: flex;
+    opacity: 1;
+    pointer-events: auto;
+    animation: modalFadeIn 0.3s ease-out;
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+#resetDataModal .modal-content-base,
+#alertModal .modal-content-base {
+    position: relative;
+    bottom: auto;
+    right: auto;
+    transform: scale(1);
+    opacity: 1;
+    width: 100%;
+    max-width: 420px;
+}
+
+#resetDataModal button,
+#alertModal button {
+    transition: all 0.2s ease;
+}
+
+#resetDataModal button:hover,
+#alertModal button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+#resetDataModal button:active,
+#alertModal button:active {
+    transform: translateY(0);
+}
+
+/* Mobile adjustments */
+@media (max-width: 640px) {
+    #resetDataModal,
+    #alertModal {
+        padding: 1rem;
+    }
+
+    #resetDataModal .modal-content-base,
+    #alertModal .modal-content-base {
+        width: 100%;
+        max-width: calc(100vw - 32px);
+    }
+}
+
 /* Requirements row */
 .mobile-lock-reqs {
     display: flex;
@@ -881,3 +999,82 @@ body {
         padding-bottom: 74px;
     }
 }
+
+    /* ===== Crossword Grid Styling ===== */
+        #crosswordGrid {
+            margin: 0 auto;
+            border-collapse: collapse;
+        }
+        #crosswordGrid td {
+            border: 2px solid #000;
+            width: 30px;
+            height: 30px;
+            text-align: center;
+            vertical-align: middle;
+        }
+        #crosswordGrid td.blocked {
+            background: #E1C697;
+            border-color: #E1C697;
+        }
+        #crosswordGrid input {
+            width: 100%;
+            height: 100%;
+            border: none;
+            outline: none;
+            text-align: center;
+            font-size: 1.2rem;
+            background: transparent;
+            color: #000;
+        }
+
+          /* Modal / dialog base styles */
+        .modal-content-base {
+            background: linear-gradient(180deg, #fff 0%, #f8f6f4 100%);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.55);
+            padding: 20px 22px;
+            max-width: 92%;
+            width: 420px;
+            transform-origin: center;
+            transition: transform 220ms cubic-bezier(.2,.9,.2,1), opacity 180ms ease;
+        }
+
+        /* Modal overlay states */
+        #confirmPurchaseModal {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #confirmPurchaseModal.hidden { display: none; }
+        #confirmPurchaseModal.opacity-0 { opacity: 0; pointer-events: none; }
+        #confirmPurchaseModal.opacity-100 { opacity: 1; pointer-events: auto; }
+
+        /* Entrance animation */
+        #confirmPurchaseModal.opacity-100 .modal-content-base {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+        }
+        #confirmPurchaseModal.opacity-0 .modal-content-base {
+            transform: translateY(8px) scale(.995);
+            opacity: 0.98;
+        }
+
+        /* Buttons inside modal */
+        #confirmPurchaseModal button {
+            min-width: 110px;
+            padding: 10px 14px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: 'Cinzel', serif;
+            font-weight: 700;
+            letter-spacing: 0.6px;
+        }
+        #confirmPurchaseBtn { background: linear-gradient(135deg,#2a5a3a,#3a7a4a); color: #fff; }
+        #cancelPurchaseBtn { background: linear-gradient(135deg,#6b2a2a,#4b2a2a); color: #fff; }
+
+        /* Small-screen tweaks */
+        @media (max-width: 420px) {
+            .modal-content-base { width: calc(100% - 32px); padding: 16px; }
+            #confirmPurchaseModal button { min-width: 90px; }
+        }

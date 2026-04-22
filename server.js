@@ -320,6 +320,58 @@ app.post('/api/easter-eggs/unlock', async (req, res) => {
   }
 });
 
+// Purchase unlock for an easter egg (deduct gems)
+app.post('/api/easter-eggs/purchase-unlock', async (req, res) => {
+  try {
+    const sessionUser = await getSessionUser(req);
+    if (!sessionUser) return res.status(401).json({ ok: false, error: 'Unauthorized' });
+
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({ ok: false, error: 'Database not connected. Try again in a moment.' });
+    }
+
+    const rawEggId = normalizeString(req.body?.eggId || '');
+    const eggId = rawEggId.toLowerCase();
+    const cost = Number(req.body?.cost) || 300;
+    if (!/^[a-z0-9_-]{1,64}$/.test(eggId)) {
+      return res.status(400).json({ ok: false, error: 'Invalid egg id.' });
+    }
+    if (!Number.isFinite(cost) || cost <= 0 || cost > 1000000) {
+      return res.status(400).json({ ok: false, error: 'Invalid cost.' });
+    }
+
+    const user = await TicketUser.findOne(getUserQueryFromSession(sessionUser))
+      .select('_id easterEggs gems')
+      .lean();
+    if (!user) return res.status(404).json({ ok: false, error: 'User not found.' });
+
+    const unlocked = Array.isArray(user.easterEggs) ? user.easterEggs : [];
+    if (unlocked.includes(eggId)) {
+      return res.status(400).json({ ok: false, error: 'Already unlocked.' });
+    }
+
+    const currentGems = user.gems || 0;
+    const MIN_RESERVE = 300; // user must keep this many gems after purchase
+    if (currentGems < cost + MIN_RESERVE) {
+      return res.status(400).json({ ok: false, error: `Insufficient gems. You must keep at least ${MIN_RESERVE} gems after purchase.` });
+    }
+
+    // Deduct cost and add egg to unlocked list (no gem reward when purchasing)
+    await TicketUser.updateOne(
+      { _id: user._id },
+      { $inc: { gems: -cost }, $addToSet: { easterEggs: eggId } }
+    );
+
+    const updated = await TicketUser.findById(user._id).select('gems easterEggs').lean();
+    const foundCount = Array.isArray(updated.easterEggs) ? updated.easterEggs.length : 0;
+
+    return res.json({ ok: true, eggId, newlyUnlocked: true, gems: updated.gems || 0, foundCount, total: TOTAL_EASTER_EGGS, cost });
+  } catch (err) {
+    console.error('Purchase unlock error:', err);
+    return res.status(500).json({ ok: false, error: 'Server error.' });
+  }
+});
+
 // Add gems without counting as easter egg
 app.post('/api/add-gems', async (req, res) => {
   try {

@@ -4,6 +4,14 @@
 //  Direct Redirect Version
 // =====================================================
 
+// ===== Mobile viewport height fix (prevents bottom void on browser UI resize) =====
+const setAppViewportHeight = () => {
+  document.documentElement.style.setProperty('--app-vh', `${window.innerHeight * 0.01}px`);
+};
+setAppViewportHeight();
+window.addEventListener('resize', setAppViewportHeight);
+window.addEventListener('orientationchange', setAppViewportHeight);
+
 const RENDER_BASE_URL = 'https://storybook-jfps.onrender.com';
 const PING_URL = `${RENDER_BASE_URL}/ping`;
 const LOGIN_URL = `${RENDER_BASE_URL}/qr-login.html`;

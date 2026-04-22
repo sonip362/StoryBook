@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>StoryBook — Trial Preview</title>
     <meta name="description" content="Preview a taste of the StoryBook adventure. Log in to unlock the full story.">
-    <link rel="shortcut icon" href="./assests/images/logo.png" type="image/x-icon">
+    <link rel="shortcut icon" href="./assests/images/logo.webp" type="image/x-icon">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -131,57 +131,49 @@
             left: 0;
             right: 0;
             z-index: 100;
-            padding: 1.2rem 1.5rem;
+            padding: 1.5rem 2rem;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 0.7rem;
-            background: linear-gradient(to top, rgba(5, 2, 8, 0.98) 0%, rgba(5, 2, 8, 0.9) 60%, transparent 100%);
-            animation: cta-slide-up 1s 1.5s ease both;
+            gap: 1rem;
+            background: linear-gradient(to top, rgba(5, 2, 8, 0.98) 0%, rgba(5, 2, 8, 0.98) 100%);
+            border-top: 2px solid rgba(245, 210, 192, 0.3);
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
         }
 
-        @keyframes cta-slide-up {
-            from {
-                transform: translateY(100%);
-                opacity: 0;
-            }
 
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
 
         .trial-cta-text {
             font-family: 'Cormorant Garamond', serif;
-            font-size: 0.9rem;
-            color: rgba(245, 210, 192, 0.7);
-            letter-spacing: 1.5px;
+            font-size: 1rem;
+            color: rgba(245, 210, 192, 0.9);
+            letter-spacing: 2px;
             text-align: center;
+            font-weight: 500;
         }
 
         .trial-cta-btn {
             font-family: 'Cinzel', serif;
             font-weight: 700;
-            font-size: 0.85rem;
+            font-size: 1rem;
             letter-spacing: 3px;
             text-transform: uppercase;
-            padding: 0.75rem 2.5rem;
+            padding: 1rem 3rem;
             color: #fff;
-            border: 2px solid rgba(255, 200, 150, 0.35);
-            border-radius: 8px;
+            border: 2px solid rgba(255, 200, 150, 0.6);
+            border-radius: 12px;
             background: linear-gradient(135deg, #ffe6e6, #c58c7d, #e79494);
             background-size: 200% 200%;
             cursor: pointer;
-            transition: all 0.4s ease;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.15) inset;
         }
 
         .trial-cta-btn:hover {
             background-position: 100% 100%;
-            transform: translateY(-2px);
-            border-color: rgba(255, 200, 150, 0.6);
-            box-shadow: 0 6px 30px rgba(139, 69, 50, 0.4);
+            transform: translateY(-3px);
+            border-color: rgba(255, 200, 150, 0.9);
+            box-shadow: 0 8px 35px rgba(139, 69, 50, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.25) inset;
         }
 
         /* === Trial Overlay Gradient (top & bottom vignette signaling "there's more") === */
@@ -202,14 +194,59 @@
             color: rgba(200, 180, 160, 0.6);
             letter-spacing: 1px;
         }
+
+        /* Mobile Responsive Styles for CTA */
+        @media (max-width: 768px) {
+            .trial-cta-bar {
+                padding: 1.2rem 1.5rem;
+                padding-bottom: max(1.2rem, env(safe-area-inset-bottom, 1.2rem));
+                gap: 0.8rem;
+                background: linear-gradient(to top, rgba(5, 2, 8, 0.98) 0%, rgba(5, 2, 8, 0.98) 100%);
+            }
+            
+            .trial-cta-btn {
+                font-size: 0.9rem;
+                padding: 0.8rem 2.5rem;
+                letter-spacing: 2px;
+            }
+            
+            .trial-cta-text {
+                font-size: 0.85rem;
+                letter-spacing: 1px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .trial-cta-bar {
+                padding: 1rem 1rem;
+                background: linear-gradient(to top, rgba(5, 2, 8, 0.98) 0%, rgba(5, 2, 8, 0.98) 100%);
+            }
+            
+            .trial-cta-btn {
+                font-size: 0.85rem;
+                padding: 0.7rem 2rem;
+                letter-spacing: 1px;
+            }
+            
+            .trial-cta-text {
+                font-size: 0.8rem;
+            }
+            
+            /* Ensure page content is tall enough on mobile */
+            .page {
+                min-height: 200vh !important;
+            }
+        }
+        
+
     </style>
 </head>
 
-<body class="m-0 p-0 w-full min-h-screen font-cormorant bg-black" style="overflow: hidden;">
+<body class="m-0 p-0 w-full min-h-screen font-cormorant bg-black">
 
     <!-- Background Music -->
     <audio id="bgMusic" loop preload="auto">
-        <source src="./assests/qr-bg-music.mp3" type="audio/mpeg">
+        <source src="./assests/calm.mp3" type="audio/mpeg">
     </audio>
 
     <!-- Sound Toggle -->
@@ -226,43 +263,51 @@
     <div class="fixed inset-0 z-[3] pointer-events-none overflow-hidden" id="particles"></div>
 
     <!-- ===== TRIAL CONTENT (the "free preview") ===== -->
-    <div class="page">
+       <div class="page" style="min-height: 150vh;">
         <div class="scroll-container">
-            <div class="scroll-image-container">
-                <img class="scroll-image" src="./assests/images/storybook.webp" alt="Storybook">
-                <button class="title-hotspot" type="button" aria-label="Hidden title hotspot"></button>
-                <div class="content-wrapper">
-                    <!-- Castle Section -->
-                    <div class="castle-section" style="overflow: hidden;">
-                        <img class="castle-image" src="./assests/images/dracula-castle-bg.png" alt="Dracula Castle">
-                        <p class="castle-text">Lorem ipsum dolor sit amet consectetur adipisicing elit. Fuga, eius
-                            maiores ducimus commodi autem praesentium minus aliquam vero deserunt accusantium excepturi
-                            voluptatibus? Molestias consequatur voluptatibus cumque suscipit, sit harum, eos ea, eaque
-                            aut nostrum optio dolore a ex? Tempora facere doloribus recusandae quaerat voluptates ad
-                            nisi amet minus voluptas corrupti.</p>
-                    </div>
+            <div class="storybook-shell">
+                <div class="scroll-top">
+                    <button class="title-hotspot" type="button" aria-label="Hidden title hotspot"></button>
+                </div>
+                <div class="scroll-middle">
+                    <div class="content-wrapper">
+                        <!-- Castle Section -->
+                        <div class="castle-section" style="overflow: hidden;">
+                            <img class="castle-image" src="./assests/images/dracula-castle-bg.webp" alt="Dracula Castle">
 
-                    <!-- Dracula Section -->
-                    <div class="dracula-section" style="clear: both; margin-top: 70px; overflow: hidden;">
-                        <div id="draculaContainer" class="dracula-container">
-                            <img id="draculaImg" src="./assests/images/dracula.png" alt="Dracula" class="dracula-image">
+                            <p class="castle-text">Professor; Theres no ghost nor Dracula. Its just an old castle.,The
+                                teacher said.
+                                <br>
+                                Professor:I always believe it theres something mysterious about this castle.
+                                <br>
+                                Teacher: Professor,Dracula is Nothing....
+                            </p>
                         </div>
-                        <p class="castle-text" style="text-indent: 0; padding-top: 100px;">
-                            Lorem ipsum dolor sit amet consectetur adipisicing elit. Fuga, eius maiores ducimus
-                            commodi autem praesentium minus aliquam vero deserunt accusantium excepturi voluptatibus?
-                            Molestias consequatur voluptatibus cumque suscipit, sit harum, eos ea, eaque aut nostrum
-                            optio dolore a ex? Tempora facere doloribus recusandae quaerat voluptates ad nisi amet
-                            minus voluptas corrupti. Lorem ipsum dolor sit amet consectetur adipisicing elit. Fuga,
-                            eius maiores ducimus commodi autem praesentium minus aliquam vero deserunt accusantium
-                            excepturi voluptatibus? Molestias consequatur voluptatibus cumque suscipit, sit harum, eos
-                            ea, eaque aut nostrum optio dolore a ex? Tempora facere doloribus recusandae quaerat
-                            voluptates ad nisi amet minus voluptas corrupti.
-                        </p>
+
+                        <!-- Dracula Section -->
+                        <div class="dracula-section">
+                            <div class="dracula-row dracula-row-mobile-reverse">
+                                <div style="flex: 1;">
+                                    <p class="castle-text dracula-story">
+                                        Prime Minister: Welcome Vlad the III
+                                        <br>
+                                        Vlad: Welcome Prime Minister
+                                        <br>
+                                        Prime Minister: Sir, Sweden is coming to attack our kingdom.
+                                        <br>
+                                        Vlad: So What,....
+                                    </p>
+                                </div>
+                                <div style="flex: 0 0 clamp(300px, 40%, 500px);">
+                                    <img src="./assests/images/shake-hands.webp" alt="Shake Hands" class="dracula-image"
+                                        style=" box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+                                </div>
+                            </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div <!-- Trial Vignette (visual hint that content is locked) -->
+    </div> <!-- Trial Vignette (visual hint that content is locked) -->
     <div class="trial-vignette"></div>
 
     <!-- ===== BOTTOM CTA BAR ===== -->
