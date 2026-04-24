@@ -16,6 +16,8 @@ const ticketUserSchema = new mongoose.Schema(
     accessCodeNormalized: { type: String, required: true, unique: true },
     easterEggs: { type: [String], default: [] },
     gems: { type: Number, default: 0 },
+    // Data URL (base64) for the user's chosen profile picture (kept small)
+    profilePic: { type: String, default: null },
     used: { type: Boolean, default: false },
     rewardsReceived: { type: [String], default: [] }
   },

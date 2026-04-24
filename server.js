@@ -441,7 +441,7 @@ app.get('/api/leaderboard', async (req, res) => {
     }
 
     const users = await TicketUser.find({})
-      .select('name classSec easterEggs gems')
+      .select('name classSec easterEggs gems profilePic')
       .lean();
 
     const leaderboard = users.map(u => {
@@ -453,7 +453,8 @@ app.get('/api/leaderboard', async (req, res) => {
         classSec: u.classSec,
         eggs: eggsCount,
         gems: gemsCount,
-        exp: exp
+        exp: exp,
+        profilePic: u.profilePic || null
       };
     })
       .sort((a, b) => b.exp - a.exp)
@@ -462,6 +463,68 @@ app.get('/api/leaderboard', async (req, res) => {
     return res.json({ ok: true, leaderboard });
   } catch (err) {
     console.error('Leaderboard error:', err);
+    return res.status(500).json({ ok: false, error: 'Server error.' });
+  }
+});
+
+// Get current authenticated user's profile (includes masked access code and profile pic)
+app.get('/api/user/me', async (req, res) => {
+  try {
+    const sessionUser = await getSessionUser(req);
+    if (!sessionUser) return res.status(401).json({ ok: false, error: 'Unauthorized' });
+
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({ ok: false, error: 'Database not connected.' });
+    }
+
+    const user = await TicketUser.findOne(getUserQueryFromSession(sessionUser))
+      .select('name rollNo classSec accessCode profilePic')
+      .lean();
+    if (!user) return res.status(404).json({ ok: false, error: 'User not found.' });
+
+    const access = String(user.accessCode || '');
+    const accessMasked = access ? access.charAt(0) + '***' : null;
+
+    return res.json({ ok: true, user: {
+      name: user.name,
+      rollNo: user.rollNo,
+      classSec: user.classSec,
+      accessMasked,
+      profilePic: user.profilePic || null
+    }});
+  } catch (err) {
+    console.error('/api/user/me error:', err);
+    return res.status(500).json({ ok: false, error: 'Server error.' });
+  }
+});
+
+// Save/update profile picture (expects { profilePic: 'data:image/...;base64,...' })
+app.post('/api/user/profile-pic', async (req, res) => {
+  try {
+    const sessionUser = await getSessionUser(req);
+    if (!sessionUser) return res.status(401).json({ ok: false, error: 'Unauthorized' });
+
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({ ok: false, error: 'Database not connected.' });
+    }
+
+    const raw = String(req.body?.profilePic || '');
+    if (!raw) return res.status(400).json({ ok: false, error: 'Missing profilePic.' });
+
+    // Basic size limit to prevent huge DB fields (~200KB)
+    if (raw.length > 200000) return res.status(400).json({ ok: false, error: 'Image too large.' });
+
+    // Basic validation: should start with data:image/
+    if (!/^data:image\/(png|jpeg|jpg|webp);base64,/.test(raw)) {
+      return res.status(400).json({ ok: false, error: 'Invalid image format. Provide a base64 data URL.' });
+    }
+
+    const update = await TicketUser.updateOne(getUserQueryFromSession(sessionUser), { $set: { profilePic: raw } });
+    if (!update.acknowledged) return res.status(500).json({ ok: false, error: 'Failed to save.' });
+
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error('/api/user/profile-pic error:', err);
     return res.status(500).json({ ok: false, error: 'Server error.' });
   }
 });

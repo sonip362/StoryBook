@@ -220,6 +220,14 @@
                     d="M12 8a1 1 0 110 2 1 1 0 010-2zm0 4a1 1 0 00-1 1v3a1 1 0 002 0v-3a1 1 0 00-1-1z" />
             </svg>
         </button>
+        <!-- Profile Button -->
+        <button id="profileBtn" class="ml-2 p-2 rounded-full hover:bg-white/10 transition-all duration-300"
+            title="Profile">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                style="width:18px;height:18px;color:#ffdfea;filter:drop-shadow(0 0 4px rgba(255,255,255,0.12));">
+                <path d="M12 12c2.761 0 5-2.239 5-5s-2.239-5-5-5-5 2.239-5 5 2.239 5 5 5zm0 2c-4.418 0-8 2.239-8 5v1h16v-1c0-2.761-3.582-5-8-5z"/>
+            </svg>
+        </button>
         <!-- Download PDF Button -->
         <button id="downloadPdfBtn" class="ml-2 p-2 rounded-full hover:bg-white/10 transition-all duration-300"
             title="Download as PDF">
@@ -297,6 +305,39 @@
                     <li>Use the <strong>Reset</strong> button to start over if needed.</li>
                 </ul>
                 <p class="mt-4" style="color:#000000;">Enjoy the adventure!</p>
+            </div>
+        </div>
+    </div>
+    <!-- Profile Modal -->
+    <div id="profileModal"
+        class="fixed inset-0 z-[420] hidden bg-black/60 backdrop-blur-md flex items-center justify-center p-4 transition-all duration-500 opacity-0">
+        <div class="modal-content-base leaderboard-light rounded-[20px] w-full max-w-sm overflow-hidden shadow-2xl p-6 text-center">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                <h3 class="font-cinzel text-lg">Your Profile</h3>
+                <button id="closeProfileBtn" class="w-9 h-9 flex items-center justify-center rounded-full bg-black/10 text-black hover:bg-black/20 transition-all cursor-pointer">
+                    ✕
+                </button>
+            </div>
+            <div style="display:flex; flex-direction:column; align-items:center; gap:12px;">
+                <div id="profileAvatar" style="width:96px;height:96px;border-radius:50%;overflow:hidden;background:linear-gradient(135deg,#222,#444);display:flex;align-items:center;justify-content:center;">
+                    <img id="profileAvatarImg" src="./assests/images/logo.webp" alt="avatar" style="width:100%;height:100%;object-fit:cover;display:block;" />
+                </div>
+                <!-- Drag & drop area (click to browse) -->
+                <div id="profileDropZone" class="profile-dropzone" role="button" tabindex="0" aria-label="Upload profile image">
+                    <input id="profileFileInput" type="file" accept="image/*" style="display:none;" />
+                    <div class="drop-instructions">Drag &amp; drop image here, or click to browse</div>
+                </div>
+                <div style="text-align:left; width:100%;">
+                    <div style="margin-bottom:6px;"><strong>Name:</strong> <span id="profileName">—</span></div>
+                    <div style="margin-bottom:6px;"><strong>Class:</strong> <span id="profileClass">—</span></div>
+                    <div style="margin-bottom:6px;"><strong>Roll No:</strong> <span id="profileRoll">—</span></div>
+                    <div style="margin-bottom:6px;"><strong>Access:</strong> <span id="profileAccess">—</span></div>
+                </div>
+                <div style="display:flex; gap:8px; width:100%; justify-content:center;">
+                    <button id="saveProfilePicBtn" class="px-4 py-2 rounded-lg" style="background:#2a5a3a;color:#fff;font-family:'Cinzel',serif;">Save</button>
+                    <button id="cancelProfileBtn" class="px-4 py-2 rounded-lg" style="background:#4b4b4b;color:#fff;font-family:'Cinzel',serif;">Close</button>
+                </div>
+                <p id="profileStatus" style="font-size:0.85rem;color:#333;min-height:20px"></p>
             </div>
         </div>
     </div>
@@ -684,6 +725,14 @@
                 <div
                     class="absolute inset-0 pointer-events-none rounded-[40px] border border-white/20 shadow-[inset_0_0_20px_rgba(255,255,255,0.5)]">
                 </div>
+            </div>
+        </div>
+
+        <!-- Coming Soon Vignette (Part 2) -->
+        <div id="comingSoonVignette" aria-hidden="false" role="note">
+            <div class="vignette-inner">
+                <h3 class="vignette-title">Part 2</h3>
+                <p class="vignette-sub">Coming Soon - Be ready for the treasure hunt(free of charge)</p>
             </div>
         </div>
 

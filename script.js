@@ -581,6 +581,28 @@ window.addEventListener('resize', () => {
 
 document.querySelector('.page')?.addEventListener('scroll', handlePageScroll);
 
+// ===== Coming Soon Vignette Visibility =====
+(() => {
+  const page = document.querySelector('.page');
+  const vignette = document.getElementById('comingSoonVignette');
+  if (!page || !vignette) return;
+
+  const THRESHOLD_PX = 48; // how close to bottom (px) before showing
+
+  const checkVignette = () => {
+    const atBottom = (page.scrollTop + page.clientHeight) >= (page.scrollHeight - THRESHOLD_PX);
+    if (atBottom) vignette.classList.add('coming-visible');
+    else vignette.classList.remove('coming-visible');
+  };
+
+  page.addEventListener('scroll', checkVignette, { passive: true });
+  window.addEventListener('resize', checkVignette);
+  // run once on load
+  window.addEventListener('load', checkVignette);
+  // also run after images settle
+  setTimeout(checkVignette, 700);
+})();
+
 // ===== Scroll Bottom Tap Toggle =====
 // Hide only the bottom when tapped; register easter egg with the server
 const scrollBottom = document.querySelector('.scroll-bottom');
@@ -1047,15 +1069,26 @@ const formatLeaderboardRow = (user, index, isCurrent = false) => {
   const currentStyle = isCurrent ? 'background: rgba(0, 211, 0, 0.15);' : '';
   const displayName = isCurrent ? '[You]' : user.name;
 
+  // Show avatar (if provided) as a small circle to the left of the name
+  const avatarHtml = user.profilePic
+    ? `<img src="${user.profilePic}" alt="avatar" style="width:40px;height:40px;border-radius:50%;object-fit:cover;margin-right:10px;border:2px solid rgba(255,255,255,0.06);"/>`
+    : (function(){
+        const initial = (user.name && String(user.name).trim().charAt(0).toUpperCase()) || '?';
+        return `<div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#222,#444);display:inline-flex;align-items:center;justify-content:center;margin-right:10px;border:2px solid rgba(255,255,255,0.04);font-family: 'Cinzel', serif;color:#fff;font-weight:700;font-size:16px;">${initial}</div>`;
+      })();
+
   return `
     <tr style="background: ${rowBg}; border-bottom: 1px solid rgba(0,0,0,0.05); ${currentStyle}">
       <td class="px-5 py-4 rounded-l-2xl">
         <span class="font-cinzel text-sm font-black" style="color: ${rankColor}">${index + 1}</span>
       </td>
       <td class="px-5 py-4">
-        <div class="flex flex-col">
-          <span class="text-base tracking-wide capitalize text-[#1a0f05] font-bold">${displayName}</span>
-          <span class="text-[10px] text-[#1a0f05]/60 uppercase font-bold tracking-[0.2em]">${user.classSec}</span>
+        <div class="flex items-center">
+          ${avatarHtml}
+          <div class="flex flex-col">
+            <span class="text-base tracking-wide capitalize text-[#1a0f05] font-bold">${displayName}</span>
+            <span class="text-[10px] text-[#1a0f05]/60 uppercase font-bold tracking-[0.2em]">${user.classSec}</span>
+          </div>
         </div>
       </td>
       <td class="px-5 py-4 text-right rounded-r-2xl">
@@ -1142,6 +1175,240 @@ if (closeLeaderboard) closeLeaderboard.addEventListener('click', hideLeaderboard
 if (leaderboardModal) {
   leaderboardModal.addEventListener('click', (e) => {
     if (e.target === leaderboardModal) hideLeaderboard();
+  });
+}
+
+// ===== Profile Modal & Upload Logic =====
+const profileBtn = document.getElementById('profileBtn');
+const profileModal = document.getElementById('profileModal');
+const closeProfileBtn = document.getElementById('closeProfileBtn');
+const cancelProfileBtn = document.getElementById('cancelProfileBtn');
+const profileFileInput = document.getElementById('profileFileInput');
+const profileAvatarImg = document.getElementById('profileAvatarImg');
+const profileNameEl = document.getElementById('profileName');
+const profileClassEl = document.getElementById('profileClass');
+const profileRollEl = document.getElementById('profileRoll');
+const profileAccessEl = document.getElementById('profileAccess');
+const saveProfilePicBtn = document.getElementById('saveProfilePicBtn');
+const profileStatus = document.getElementById('profileStatus');
+
+let stagedProfileDataUrl = null;
+
+const openProfileModal = async () => {
+  if (!profileModal) return;
+  profileStatus.textContent = '';
+  profileModal.classList.remove('hidden');
+  profileModal.classList.add('flex');
+  // also add modal-show to animate the inner content into view
+  setTimeout(() => {
+    profileModal.classList.add('opacity-100');
+    const inner = profileModal.querySelector('.modal-content-base');
+    if (inner) inner.classList.add('modal-show');
+  }, 10);
+  // Load user info
+  try {
+    const res = await fetch('/api/user/me', { cache: 'no-store' });
+    const data = await res.json().catch(() => null);
+    if (data && data.ok && data.user) {
+      profileNameEl.textContent = data.user.name || '—';
+      profileClassEl.textContent = data.user.classSec || '—';
+      profileRollEl.textContent = data.user.rollNo || '—';
+      profileAccessEl.textContent = data.user.accessMasked || '—';
+      if (data.user.profilePic) {
+        profileAvatarImg.src = data.user.profilePic;
+      }
+    }
+  } catch (e) {
+    console.warn('Failed to load profile', e);
+  }
+};
+
+const closeProfileModal = () => {
+  if (!profileModal) return;
+  profileModal.classList.remove('opacity-100');
+  const inner = profileModal.querySelector('.modal-content-base');
+  if (inner) inner.classList.remove('modal-show');
+  setTimeout(() => {
+    profileModal.classList.add('hidden');
+    profileModal.classList.remove('flex');
+  }, 300);
+};
+
+if (profileBtn) profileBtn.addEventListener('click', openProfileModal);
+if (closeProfileBtn) closeProfileBtn.addEventListener('click', closeProfileModal);
+if (cancelProfileBtn) cancelProfileBtn.addEventListener('click', closeProfileModal);
+
+function handleSelectedFile(f) {
+  if (!f) return;
+  profileStatus.textContent = 'Processing image...';
+  return compressImageFileToDataUrl(f, 190000 /* target bytes for base64 length */)
+    .then((dataUrl) => {
+      stagedProfileDataUrl = dataUrl;
+      if (profileAvatarImg) profileAvatarImg.src = dataUrl;
+      profileStatus.textContent = '';
+    })
+    .catch((err) => {
+      console.error('Image processing failed', err);
+      profileStatus.textContent = 'Failed to process image. Try a smaller file.';
+      setTimeout(() => profileStatus.textContent = '', 2500);
+    });
+}
+
+if (profileFileInput) {
+  profileFileInput.addEventListener('change', (e) => {
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+    handleSelectedFile(f);
+  });
+}
+
+// Drag & drop support
+const profileDropZone = document.getElementById('profileDropZone');
+
+// Prevent the browser from opening files dropped outside the drop zone
+['dragenter', 'dragover', 'dragleave', 'drop'].forEach((evt) => {
+  window.addEventListener(evt, (e) => {
+    // Only prevent default for file drag/drop events
+    if (e && e.dataTransfer) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  }, false);
+});
+
+if (profileDropZone) {
+  profileDropZone.addEventListener('click', () => {
+    if (profileFileInput) profileFileInput.click();
+  });
+  profileDropZone.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      if (profileFileInput) profileFileInput.click();
+    }
+  });
+
+  profileDropZone.addEventListener('dragenter', (e) => {
+    if (e && e.dataTransfer) {
+      e.preventDefault();
+      e.stopPropagation();
+      e.dataTransfer.dropEffect = 'copy';
+    }
+    profileDropZone.classList.add('dragover');
+  });
+
+  profileDropZone.addEventListener('dragover', (e) => {
+    if (e && e.dataTransfer) {
+      e.preventDefault();
+      e.stopPropagation();
+      e.dataTransfer.dropEffect = 'copy';
+    }
+    profileDropZone.classList.add('dragover');
+  });
+
+  profileDropZone.addEventListener('dragleave', (e) => {
+    if (e && e.dataTransfer) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    profileDropZone.classList.remove('dragover');
+  });
+
+  profileDropZone.addEventListener('drop', (e) => {
+    if (e && e.dataTransfer) {
+      e.preventDefault();
+      e.stopPropagation();
+      e.dataTransfer.dropEffect = 'copy';
+    }
+    profileDropZone.classList.remove('dragover');
+    const f = (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]);
+    if (!f) return;
+    // set the hidden input's files for compatibility
+    try {
+      const dt = new DataTransfer();
+      dt.items.add(f);
+      if (profileFileInput) profileFileInput.files = dt.files;
+    } catch (err) {
+      // ignore if DataTransfer unavailable
+    }
+    handleSelectedFile(f);
+  });
+}
+
+// Compress/resample an image file to a dataURL under maxBytes (approx base64 length)
+function compressImageFileToDataUrl(file, maxBytes) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const maxDim = 512; // max width/height
+        let { width, height } = img;
+        if (width > maxDim || height > maxDim) {
+          const ratio = Math.max(width / maxDim, height / maxDim);
+          width = Math.round(width / ratio);
+          height = Math.round(height / ratio);
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Try quality levels until under limit (for jpeg/webp)
+        const mime = 'image/jpeg';
+        let quality = 0.9;
+        function attempt() {
+          const dataUrl = canvas.toDataURL(mime, quality);
+          // approximate byte length of base64: length of string
+          if (dataUrl.length <= maxBytes || quality <= 0.35) {
+            URL.revokeObjectURL(url);
+            resolve(dataUrl);
+          } else {
+            quality -= 0.12;
+            attempt();
+          }
+        }
+        attempt();
+      } catch (e) {
+        URL.revokeObjectURL(url);
+        reject(e);
+      }
+    };
+    img.onerror = (e) => {
+      URL.revokeObjectURL(url);
+      reject(new Error('Image load error'));
+    };
+    img.src = url;
+  });
+}
+
+if (saveProfilePicBtn) {
+  saveProfilePicBtn.addEventListener('click', async () => {
+    if (!stagedProfileDataUrl) {
+      profileStatus.textContent = 'Choose an image first.';
+      return;
+    }
+    profileStatus.textContent = 'Saving...';
+    try {
+      const res = await fetch('/api/user/profile-pic', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profilePic: stagedProfileDataUrl })
+      });
+      const data = await res.json().catch(() => null);
+      if (res.ok && data && data.ok) {
+        profileStatus.textContent = 'Saved.';
+        // Refresh leaderboard if open
+        if (leaderboardModal && leaderboardModal.classList.contains('flex')) fetchLeaderboard();
+      } else {
+        profileStatus.textContent = 'Save failed: ' + (data?.error || 'unknown');
+      }
+    } catch (err) {
+      console.error('Profile save failed', err);
+      profileStatus.textContent = 'Save failed.';
+    }
+    setTimeout(() => { profileStatus.textContent = ''; }, 2500);
   });
 }
 

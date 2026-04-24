@@ -1028,6 +1028,7 @@ body {
         }
 
           /* Modal / dialog base styles */
+        /* ===== Modal & Profile Styling ===== */
         .modal-content-base {
             background: linear-gradient(180deg, #fff 0%, #f8f6f4 100%);
             border-radius: 20px;
@@ -1037,6 +1038,115 @@ body {
             width: 420px;
             transform-origin: center;
             transition: transform 220ms cubic-bezier(.2,.9,.2,1), opacity 180ms ease;
+        }
+        .modal-content-base {
+            background: linear-gradient(135deg, #f5d2c0 0%, #fae8db 100%);
+            color: #300000;
+            border-radius: 18px;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.45);
+            transition: transform 0.28s cubic-bezier(.2,.9,.3,1), opacity 0.25s ease;
+        }
+        .modal-content-base.modal-show {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+        }
+        .modal-content-base > * {
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Modal container visibility helpers */
+        .modal-content-base.hidden {
+            opacity: 0;
+            transform: translateY(6px) scale(0.995);
+        }
+
+        #profileModal .modal-content-base {
+            border-radius: 20px;
+            padding: 18px;
+            min-height: 460px; /* increased modal height for profile */
+        }
+
+        /* Profile dropzone */
+        .profile-dropzone {
+            width: 100%;
+            max-width: 420px;
+            height: 120px;
+            border: 2px dashed rgba(30,30,30,0.12);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.02));
+            transition: border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+            margin-bottom: 6px;
+        }
+        .profile-dropzone:focus {
+            outline: none;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+        }
+        .profile-dropzone:hover {
+            border-color: rgba(245,210,192,0.35);
+        }
+        .profile-dropzone.dragover {
+            border-color: rgba(80,180,120,0.8);
+            background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(0,0,0,0.04));
+        }
+        .profile-dropzone .drop-instructions {
+            font-family: 'Cinzel', serif;
+            color: #2b2b2b;
+            font-size: 0.95rem;
+            text-align: center;
+        }
+
+        /* Backdrop and transition for modal wrappers */
+        #profileModal,
+        #helpModal,
+        #leaderboardModal,
+        #resetDataModal,
+        #alertModal,
+        #videoModal {
+            transition: opacity 0.25s ease; 
+        }
+
+        #profileModal .modal-content-base .header-title,
+        #helpModal .modal-content-base .header-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* Profile avatar styling */
+        #profileAvatar {
+            width: 96px;
+            height: 96px;
+            border-radius: 50%;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.35), inset 0 2px 6px rgba(255,255,255,0.04);
+            border: 2px solid rgba(0,0,0,0.08);
+        }
+        #profileAvatarImg {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .modal-content-base button {
+            transition: transform 0.12s ease, box-shadow 0.12s ease;
+        }
+        .modal-content-base button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+        }
+
+        /* small helper for modal status text */
+        #profileStatus {
+            color: #2a4a2a;
+            min-height: 20px;
         }
 
         /* Modal overlay states */
@@ -1077,4 +1187,80 @@ body {
         @media (max-width: 420px) {
             .modal-content-base { width: calc(100% - 32px); padding: 16px; }
             #confirmPurchaseModal button { min-width: 90px; }
+        }
+
+        /* ===== Coming Soon Vignette (Part 2) ===== */
+        #comingSoonVignette {
+            position: fixed;
+            left: 50%;
+            bottom: 28px;
+            transform: translateX(-50%) translateY(6px);
+            z-index: 1000;
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: min(86vw, 520px);
+            max-width: 90%;
+            border-radius: 14px;
+            padding: 14px 20px;
+            background: radial-gradient(120% 60% at 10% 0%, rgba(0,0,0,0.55), rgba(0,0,0,0.35) 40%, rgba(0,0,0,0.12) 100%),
+                        linear-gradient(180deg, rgba(255,248,240,0.06), rgba(0,0,0,0.02));
+            box-shadow: 0 18px 40px rgba(2,2,2,0.6), inset 0 1px 0 rgba(255,255,255,0.03);
+            backdrop-filter: blur(8px) saturate(120%);
+            -webkit-backdrop-filter: blur(8px) saturate(120%);
+            color: #fff7ea;
+            font-family: 'Cinzel', serif;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 420ms cubic-bezier(.2,.9,.2,1), transform 420ms cubic-bezier(.2,.9,.2,1);
+        }
+
+        #comingSoonVignette .vignette-inner {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+
+        .vignette-title {
+            font-size: 1.05rem;
+            letter-spacing: 0.35em;
+            text-transform: uppercase;
+            color: #ffd9c9;
+            margin: 0;
+            text-shadow: 0 6px 20px rgba(60, 20, 10, 0.45);
+        }
+
+        .vignette-sub {
+            margin: 0;
+            font-size: 0.95rem;
+            color: rgba(255, 235, 220, 0.95);
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
+        }
+
+        /* Soft vignette fade and subtle pulse */
+        @keyframes vignettePulse {
+            0% { transform: translateX(-50%) scale(0.996); filter: drop-shadow(0 12px 30px rgba(0,0,0,0.48)); }
+            50% { transform: translateX(-50%) scale(1); filter: drop-shadow(0 20px 42px rgba(0,0,0,0.56)); }
+            100% { transform: translateX(-50%) scale(0.996); filter: drop-shadow(0 12px 30px rgba(0,0,0,0.48)); }
+        }
+
+        #comingSoonVignette { animation: vignettePulse 3.6s ease-in-out infinite; }
+
+        /* Visible state toggled by JS when user reaches bottom */
+        .coming-visible {
+            opacity: 0.98 !important;
+            transform: translateX(-50%) translateY(0) !important;
+            pointer-events: auto !important;
+        }
+
+        @media (max-width: 640px) {
+            #comingSoonVignette { bottom: 18px; padding: 12px 14px; width: calc(96vw); }
+            .vignette-title { font-size: 0.95rem; }
+            .vignette-sub { font-size: 0.9rem; }
         }
