@@ -442,8 +442,8 @@ if (bgMusic) {
 // ===== Page Locking System =====
 const lockSteps = [
   { eggs: 1, gems: 100, desktopPercent: 0.26, mobilePercent: 0.40 },
-  { eggs: 2, gems: 200, desktopPercent: 0.40, mobilePercent: 0.70 },
-  { eggs: 3, gems: 300, desktopPercent: 0.90, mobilePercent: 0.60 }
+  { eggs: 2, gems: 200, desktopPercent: 0.40, mobilePercent: 0.33 },
+  { eggs: 3, gems: 300, desktopPercent: 0.66, mobilePercent: 0.60 }
 ];
 
 const getOffsetTopWithin = (element, ancestor) => {
@@ -1066,14 +1066,15 @@ const formatLeaderboardRow = (user, index, isCurrent = false) => {
   const rankColor = isTop3 ? ['#b8860b', '#707070', '#8b4513'][index] : '#1a0f05cc';
   const rowBg = isTop3 ? 'rgba(0, 0, 0, 0.03)' : 'transparent';
   // Highlight current user with a subtle green background and display "[You]"
-  const currentStyle = isCurrent ? 'background: rgba(0, 211, 0, 0.15);' : '';
-  const displayName = isCurrent ? '[You]' : user.name;
+  const currentStyle = isCurrent ? 'background: rgba(0, 211, 0, 0.15);' : 'background: transparent;';
+  const username = user.username || '@seeker';
+  const displayName = isCurrent ? '[You]' : username;
 
   // Show avatar (if provided) as a small circle to the left of the name
   const avatarHtml = user.profilePic
     ? `<img src="${user.profilePic}" alt="avatar" style="width:40px;height:40px;border-radius:50%;object-fit:cover;margin-right:10px;border:2px solid rgba(255,255,255,0.06);"/>`
     : (function(){
-        const initial = (user.name && String(user.name).trim().charAt(0).toUpperCase()) || '?';
+        const initial = (username && String(username).trim().replace(/^@/, '').charAt(0).toUpperCase()) || '?';
         return `<div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#222,#444);display:inline-flex;align-items:center;justify-content:center;margin-right:10px;border:2px solid rgba(255,255,255,0.04);font-family: 'Cinzel', serif;color:#fff;font-weight:700;font-size:16px;">${initial}</div>`;
       })();
 
@@ -1108,10 +1109,10 @@ const fetchCurrentUser = async () => {
   // The endpoint returns { authenticated: Boolean, user: Object|null }.
   // We store the user object (if any) in `currentSessionUser` for leaderboard highlighting.
   try {
-    const res = await fetch('/api/session', { credentials: 'include' });
-    const data = await res.json();
-    // The API does not include an `ok` flag; use the presence of `user`.
-    if (data && data.user) {
+    // Use the richer profile endpoint so we include `username` when present
+    const res = await fetch('/api/user/me', { cache: 'no-store' });
+    const data = await res.json().catch(() => null);
+    if (data && data.ok && data.user) {
       currentSessionUser = data.user;
       console.log('Fetched current user:', currentSessionUser);
     } else {
@@ -1127,8 +1128,6 @@ const fetchCurrentUser = async () => {
 const fetchLeaderboard = async () => {
   if (!leaderboardBody) return;
   leaderboardBody.innerHTML = '<tr><td colspan="3" class="text-center py-10 opacity-40 font-cinzel text-xs tracking-widest animate-pulse">Consulting the archives...</td></tr>';
-  // Ensure we have the current user info before rendering
-  await fetchCurrentUser();
   try {
     const res = await fetch('/api/leaderboard');
     const data = await res.json();
@@ -1138,10 +1137,8 @@ const fetchLeaderboard = async () => {
       } else {
         leaderboardBody.innerHTML = data.leaderboard
           .map((user, i) => {
-            const isCurrent = currentSessionUser &&
-              typeof user.name === 'string' && typeof currentSessionUser.name === 'string' &&
-              user.name.trim().toLowerCase() === currentSessionUser.name.trim().toLowerCase();
-            console.log('Leaderboard row', i, 'user:', user.name, 'isCurrent:', isCurrent);
+            const isCurrent = Boolean(user.isCurrentUser);
+            console.log('Leaderboard row', i, 'user:', user.username, 'isCurrent:', isCurrent);
             return formatLeaderboardRow(user, i, isCurrent);
           })
           .join('');
@@ -1189,6 +1186,7 @@ const profileNameEl = document.getElementById('profileName');
 const profileClassEl = document.getElementById('profileClass');
 const profileRollEl = document.getElementById('profileRoll');
 const profileAccessEl = document.getElementById('profileAccess');
+const profileUsernameInput = document.getElementById('profileUsernameInput');
 const saveProfilePicBtn = document.getElementById('saveProfilePicBtn');
 const profileStatus = document.getElementById('profileStatus');
 
@@ -1214,6 +1212,7 @@ const openProfileModal = async () => {
       profileClassEl.textContent = data.user.classSec || '—';
       profileRollEl.textContent = data.user.rollNo || '—';
       profileAccessEl.textContent = data.user.accessMasked || '—';
+      if (profileUsernameInput) profileUsernameInput.value = data.user.username ? ('@' + data.user.username) : '';
       if (data.user.profilePic) {
         profileAvatarImg.src = data.user.profilePic;
       }
@@ -1385,20 +1384,34 @@ function compressImageFileToDataUrl(file, maxBytes) {
 
 if (saveProfilePicBtn) {
   saveProfilePicBtn.addEventListener('click', async () => {
-    if (!stagedProfileDataUrl) {
-      profileStatus.textContent = 'Choose an image first.';
+    const rawUsername = profileUsernameInput ? String(profileUsernameInput.value || '').replace(/^@+/, '').trim() : '';
+    const payload = {};
+    if (stagedProfileDataUrl) payload.profilePic = stagedProfileDataUrl;
+    if (rawUsername) payload.username = rawUsername;
+
+    if (rawUsername && !/^[a-zA-Z0-9_]{2,30}$/.test(rawUsername)) {
+      profileStatus.textContent = 'Invalid username. Use 2–30 letters, numbers or underscores.';
       return;
     }
+
+    if (!payload.profilePic && !payload.username) {
+      profileStatus.textContent = 'Choose an image or enter a username.';
+      return;
+    }
+
     profileStatus.textContent = 'Saving...';
     try {
       const res = await fetch('/api/user/profile-pic', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ profilePic: stagedProfileDataUrl })
+        body: JSON.stringify(payload)
       });
       const data = await res.json().catch(() => null);
       if (res.ok && data && data.ok) {
         profileStatus.textContent = 'Saved.';
+        if (payload.username && profileUsernameInput) {
+          profileUsernameInput.value = `@${payload.username}`;
+        }
         // Refresh leaderboard if open
         if (leaderboardModal && leaderboardModal.classList.contains('flex')) fetchLeaderboard();
       } else {
@@ -1724,4 +1737,3 @@ document.getElementById('downloadPdfBtn')?.addEventListener('click', function() 
     link.click();
     document.body.removeChild(link);
 });
-

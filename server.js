@@ -18,6 +18,16 @@ const normalizeString = (value) => String(value || '').trim();
 const normalizeName = (value) => normalizeString(value).toLowerCase();
 const normalizeClassSec = (value) => normalizeString(value).toUpperCase().replace(/\s+/g, '');
 const normalizeAccessCode = (value) => normalizeString(value).toLowerCase().replace(/\s+/g, '');
+const normalizeUsername = (value) => {
+  const raw = normalizeString(value);
+  if (!raw) return { username: null, usernameNormalized: null };
+  const withAt = raw.startsWith('@') ? raw : `@${raw}`;
+  const handle = withAt.slice(1);
+  if (!/^[A-Za-z0-9_]{2,20}$/.test(handle)) {
+    return { username: null, usernameNormalized: null };
+  }
+  return { username: `@${handle}`, usernameNormalized: `@${handle.toLowerCase()}` };
+};
 const normalizeRollNo = (value) => {
   const trimmed = normalizeString(value);
   const asNumber = Number(trimmed);
@@ -441,20 +451,27 @@ app.get('/api/leaderboard', async (req, res) => {
     }
 
     const users = await TicketUser.find({})
-      .select('name classSec easterEggs gems profilePic')
+      .select('name username classSec rollNo easterEggs gems profilePic')
       .lean();
 
     const leaderboard = users.map(u => {
       const eggsCount = Array.isArray(u.easterEggs) ? u.easterEggs.length : 0;
       const gemsCount = u.gems || 0;
       const exp = eggsCount * gemsCount;
+      const fallbackUsername = `@seeker${String(u._id || '').slice(-4) || '0000'}`;
+      const usernameData = normalizeUsername(u.username);
+      const isCurrentUser =
+        normalizeName(u.name) === normalizeName(sessionUser.name) &&
+        normalizeRollNo(u.rollNo) === normalizeRollNo(sessionUser.rollNo) &&
+        normalizeClassSec(u.classSec) === normalizeClassSec(sessionUser.classSec);
       return {
-        name: u.name,
+        username: usernameData.username || fallbackUsername,
         classSec: u.classSec,
         eggs: eggsCount,
         gems: gemsCount,
         exp: exp,
-        profilePic: u.profilePic || null
+        profilePic: u.profilePic || null,
+        isCurrentUser
       };
     })
       .sort((a, b) => b.exp - a.exp)
@@ -478,7 +495,7 @@ app.get('/api/user/me', async (req, res) => {
     }
 
     const user = await TicketUser.findOne(getUserQueryFromSession(sessionUser))
-      .select('name rollNo classSec accessCode profilePic')
+      .select('name rollNo classSec accessCode profilePic username')
       .lean();
     if (!user) return res.status(404).json({ ok: false, error: 'User not found.' });
 
@@ -490,7 +507,8 @@ app.get('/api/user/me', async (req, res) => {
       rollNo: user.rollNo,
       classSec: user.classSec,
       accessMasked,
-      profilePic: user.profilePic || null
+      profilePic: user.profilePic || null,
+      username: normalizeUsername(user.username).username
     }});
   } catch (err) {
     console.error('/api/user/me error:', err);
@@ -508,22 +526,41 @@ app.post('/api/user/profile-pic', async (req, res) => {
       return res.status(503).json({ ok: false, error: 'Database not connected.' });
     }
 
-    const raw = String(req.body?.profilePic || '');
-    if (!raw) return res.status(400).json({ ok: false, error: 'Missing profilePic.' });
+    const rawProfile = req.body?.profilePic ? String(req.body.profilePic) : '';
+    const rawUsername = req.body?.username ? String(req.body.username).trim() : '';
 
-    // Basic size limit to prevent huge DB fields (~200KB)
-    if (raw.length > 200000) return res.status(400).json({ ok: false, error: 'Image too large.' });
+    if (!rawProfile && !rawUsername) return res.status(400).json({ ok: false, error: 'Missing profilePic or username.' });
 
-    // Basic validation: should start with data:image/
-    if (!/^data:image\/(png|jpeg|jpg|webp);base64,/.test(raw)) {
-      return res.status(400).json({ ok: false, error: 'Invalid image format. Provide a base64 data URL.' });
+    const updateObj = {};
+
+    if (rawProfile) {
+      // Basic size limit to prevent huge DB fields (~200KB)
+      if (rawProfile.length > 200000) return res.status(400).json({ ok: false, error: 'Image too large.' });
+      // Basic validation: should start with data:image/
+      if (!/^data:image\/(png|jpeg|jpg|webp);base64,/.test(rawProfile)) {
+        return res.status(400).json({ ok: false, error: 'Invalid image format. Provide a base64 data URL.' });
+      }
+      updateObj.profilePic = rawProfile;
     }
 
-    const update = await TicketUser.updateOne(getUserQueryFromSession(sessionUser), { $set: { profilePic: raw } });
+    if (rawUsername) {
+      const usernameData = normalizeUsername(rawUsername);
+      if (!usernameData.username || !usernameData.usernameNormalized) {
+        return res.status(400).json({ ok: false, error: 'Invalid username. Use 2-20 letters, numbers or underscores.' });
+      }
+      updateObj.username = usernameData.username;
+      updateObj.usernameNormalized = usernameData.usernameNormalized;
+    }
+
+    const update = await TicketUser.updateOne(getUserQueryFromSession(sessionUser), { $set: updateObj });
     if (!update.acknowledged) return res.status(500).json({ ok: false, error: 'Failed to save.' });
+    if (!update.matchedCount) return res.status(404).json({ ok: false, error: 'User not found.' });
 
     return res.json({ ok: true });
   } catch (err) {
+    if (err && err.code === 11000) {
+      return res.status(409).json({ ok: false, error: 'Username is already taken.' });
+    }
     console.error('/api/user/profile-pic error:', err);
     return res.status(500).json({ ok: false, error: 'Server error.' });
   }
