@@ -458,7 +458,12 @@ app.get('/api/leaderboard', async (req, res) => {
       const eggsCount = Array.isArray(u.easterEggs) ? u.easterEggs.length : 0;
       const gemsCount = u.gems || 0;
       const exp = eggsCount * gemsCount;
-      const fallbackUsername = `@seeker${String(u._id || '').slice(-4) || '0000'}`;
+      const nameInitial = String(u.name || '').trim().charAt(0).toUpperCase() || '?';
+      const nameBasedHandle = String(u.name || '')
+        .trim()
+        .replace(/\s+/g, '')
+        .replace(/[^A-Za-z0-9_]/g, '');
+      const fallbackUsername = nameBasedHandle ? `@${nameBasedHandle}` : `@seeker${String(u._id || '').slice(-4) || '0000'}`;
       const usernameData = normalizeUsername(u.username);
       const isCurrentUser =
         normalizeName(u.name) === normalizeName(sessionUser.name) &&
@@ -471,6 +476,7 @@ app.get('/api/leaderboard', async (req, res) => {
         gems: gemsCount,
         exp: exp,
         profilePic: u.profilePic || null,
+        nameInitial,
         isCurrentUser
       };
     })
@@ -495,12 +501,28 @@ app.get('/api/user/me', async (req, res) => {
     }
 
     const user = await TicketUser.findOne(getUserQueryFromSession(sessionUser))
-      .select('name rollNo classSec accessCode profilePic username')
+      .select('name rollNo classSec accessCode profilePic username easterEggs gems')
       .lean();
     if (!user) return res.status(404).json({ ok: false, error: 'User not found.' });
 
     const access = String(user.accessCode || '');
     const accessMasked = access ? access.charAt(0) + '***' : null;
+    const eggs = Array.isArray(user.easterEggs) ? user.easterEggs.length : 0;
+    const gems = user.gems || 0;
+    const exp = eggs * gems;
+
+    const rankUsers = await TicketUser.find({})
+      .select('_id easterEggs gems')
+      .lean();
+    const ranked = rankUsers
+      .map((u) => {
+        const rEggs = Array.isArray(u.easterEggs) ? u.easterEggs.length : 0;
+        const rGems = u.gems || 0;
+        return { id: String(u._id), exp: rEggs * rGems };
+      })
+      .sort((a, b) => b.exp - a.exp);
+    const rankIndex = ranked.findIndex((u) => u.id === String(user._id));
+    const rank = rankIndex >= 0 ? rankIndex + 1 : null;
 
     return res.json({ ok: true, user: {
       name: user.name,
@@ -508,7 +530,11 @@ app.get('/api/user/me', async (req, res) => {
       classSec: user.classSec,
       accessMasked,
       profilePic: user.profilePic || null,
-      username: normalizeUsername(user.username).username
+      username: normalizeUsername(user.username).username,
+      rank,
+      eggs,
+      gems,
+      exp
     }});
   } catch (err) {
     console.error('/api/user/me error:', err);

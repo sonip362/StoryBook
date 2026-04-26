@@ -297,6 +297,61 @@ if (storyHeader && scrollPage) {
   handleScroll();
 }
 
+// ===== Mobile Header Hamburger (storybook.html) =====
+if (storyHeader) {
+  let hamburgerBtn = null;
+
+  const closeHeaderMenu = () => {
+    storyHeader.classList.remove('menu-open');
+  };
+
+  const ensureHeaderHamburger = () => {
+    const isMobile = window.innerWidth <= 768;
+
+    if (!isMobile) {
+      closeHeaderMenu();
+      if (hamburgerBtn) {
+        hamburgerBtn.remove();
+        hamburgerBtn = null;
+      }
+      return;
+    }
+
+    if (hamburgerBtn) return;
+
+    hamburgerBtn = document.createElement('button');
+    hamburgerBtn.id = 'hamburgerBtn';
+    hamburgerBtn.type = 'button';
+    hamburgerBtn.setAttribute('aria-label', 'Open menu');
+    hamburgerBtn.innerHTML = '<span class="hamburger-lines" aria-hidden="true"></span>';
+
+    hamburgerBtn.addEventListener('click', (event) => {
+      event.stopPropagation();
+      storyHeader.classList.toggle('menu-open');
+    });
+
+    storyHeader.appendChild(hamburgerBtn);
+  };
+
+  storyHeader.addEventListener('click', (event) => {
+    const clickedMenuItem = event.target.closest('#gemCounter, #resetDataBtn, #helpBtn, #profileBtn, #downloadPdfBtn');
+    if (clickedMenuItem) closeHeaderMenu();
+  });
+
+  document.addEventListener('click', (event) => {
+    if (window.innerWidth > 768) return;
+    if (!storyHeader.classList.contains('menu-open')) return;
+    if (!storyHeader.contains(event.target)) closeHeaderMenu();
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') closeHeaderMenu();
+  });
+
+  window.addEventListener('resize', ensureHeaderHamburger);
+  ensureHeaderHamburger();
+}
+
 // ===== Storybook Page Logic =====
 const castleImage = document.querySelector('.castle-image');
 const titleHotspot = document.querySelector('.title-hotspot');
@@ -1059,6 +1114,17 @@ const leaderboardModal = document.getElementById('leaderboardModal');
 const closeLeaderboard = document.getElementById('closeLeaderboard');
 const leaderboardBody = document.getElementById('leaderboardBody');
 
+const escapeSvgText = (value) => String(value || '')
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;');
+
+const buildInitialAvatarSvgDataUrl = (initial) => {
+  const letter = String(initial || '?').trim().charAt(0).toUpperCase() || '?';
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1f2937"/><stop offset="100%" stop-color="#111827"/></linearGradient></defs><circle cx="40" cy="40" r="40" fill="url(#g)"/><circle cx="40" cy="30" r="12" fill="#9ca3af"/><path d="M18 64c3-11 12-17 22-17s19 6 22 17" fill="none" stroke="#9ca3af" stroke-width="6" stroke-linecap="round"/><text x="40" y="72" text-anchor="middle" font-family="Cinzel, serif" font-size="16" font-weight="700" fill="#f9fafb">${escapeSvgText(letter)}</text></svg>`;
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+};
+
 // Format a leaderboard row. If `isCurrent` is true, the row gets a green border and the name is wrapped in brackets.
 const formatLeaderboardRow = (user, index, isCurrent = false) => {
   const isTop3 = index < 3;
@@ -1074,8 +1140,9 @@ const formatLeaderboardRow = (user, index, isCurrent = false) => {
   const avatarHtml = user.profilePic
     ? `<img src="${user.profilePic}" alt="avatar" style="width:40px;height:40px;border-radius:50%;object-fit:cover;margin-right:10px;border:2px solid rgba(255,255,255,0.06);"/>`
     : (function(){
-        const initial = (username && String(username).trim().replace(/^@/, '').charAt(0).toUpperCase()) || '?';
-        return `<div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#222,#444);display:inline-flex;align-items:center;justify-content:center;margin-right:10px;border:2px solid rgba(255,255,255,0.04);font-family: 'Cinzel', serif;color:#fff;font-weight:700;font-size:16px;">${initial}</div>`;
+        const initial = (user.nameInitial && String(user.nameInitial).trim().charAt(0).toUpperCase()) || '?';
+        const svgAvatar = buildInitialAvatarSvgDataUrl(initial);
+        return `<img src="${svgAvatar}" alt="avatar" style="width:40px;height:40px;border-radius:50%;object-fit:cover;margin-right:10px;border:2px solid rgba(255,255,255,0.06);"/>`;
       })();
 
   return `
@@ -1186,6 +1253,9 @@ const profileNameEl = document.getElementById('profileName');
 const profileClassEl = document.getElementById('profileClass');
 const profileRollEl = document.getElementById('profileRoll');
 const profileAccessEl = document.getElementById('profileAccess');
+const profileRankEl = document.getElementById('profileRank');
+const profileEggsEl = document.getElementById('profileEggs');
+const profileGemsEl = document.getElementById('profileGems');
 const profileUsernameInput = document.getElementById('profileUsernameInput');
 const saveProfilePicBtn = document.getElementById('saveProfilePicBtn');
 const profileStatus = document.getElementById('profileStatus');
@@ -1195,6 +1265,9 @@ let stagedProfileDataUrl = null;
 const openProfileModal = async () => {
   if (!profileModal) return;
   profileStatus.textContent = '';
+  if (profileRankEl) profileRankEl.textContent = '—';
+  if (profileEggsEl) profileEggsEl.textContent = '0';
+  if (profileGemsEl) profileGemsEl.textContent = '0';
   profileModal.classList.remove('hidden');
   profileModal.classList.add('flex');
   // also add modal-show to animate the inner content into view
@@ -1212,13 +1285,26 @@ const openProfileModal = async () => {
       profileClassEl.textContent = data.user.classSec || '—';
       profileRollEl.textContent = data.user.rollNo || '—';
       profileAccessEl.textContent = data.user.accessMasked || '—';
-      if (profileUsernameInput) profileUsernameInput.value = data.user.username ? ('@' + data.user.username) : '';
+      if (profileRankEl) profileRankEl.textContent = data.user.rank ? `#${data.user.rank}` : '—';
+      if (profileEggsEl) profileEggsEl.textContent = String(data.user.eggs ?? 0);
+      if (profileGemsEl) profileGemsEl.textContent = String(data.user.gems ?? 0);
+      if (profileUsernameInput) profileUsernameInput.value = data.user.username || '';
       if (data.user.profilePic) {
         profileAvatarImg.src = data.user.profilePic;
+      } else {
+        const initial = String(data.user.name || '').trim().charAt(0).toUpperCase() || '?';
+        profileAvatarImg.src = buildInitialAvatarSvgDataUrl(initial);
       }
+    } else {
+      if (profileRankEl) profileRankEl.textContent = '—';
+      if (profileEggsEl) profileEggsEl.textContent = '0';
+      if (profileGemsEl) profileGemsEl.textContent = '0';
     }
   } catch (e) {
     console.warn('Failed to load profile', e);
+    if (profileRankEl) profileRankEl.textContent = '—';
+    if (profileEggsEl) profileEggsEl.textContent = '0';
+    if (profileGemsEl) profileGemsEl.textContent = '0';
   }
 };
 
