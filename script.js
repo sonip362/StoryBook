@@ -2,6 +2,26 @@
 (() => {
   const loadingShield = document.getElementById('loadingShield');
   if (!loadingShield) return;
+  const shieldStatus = document.getElementById('shieldStatus');
+  const shieldSub = document.getElementById('shieldSub');
+  const shieldContinueBtn = document.getElementById('shieldContinueBtn');
+  const shieldSpinner = loadingShield.querySelector('.shield-spinner');
+  const shieldMessages = [
+    'Preparing the Castle...',
+    'Awakening the Dragon...',
+    'Lighting the Torches...',
+    'Opening the Gates...',
+    'Almost there...',
+  ];
+  const minLoadingDisplayMs = 2600;
+  let shieldMessageTimer = null;
+  let loadingStartedAt = 0;
+
+  const markUserGestureReady = () => {
+    if (window.__sbUserGestureReady) return;
+    window.__sbUserGestureReady = true;
+    window.dispatchEvent(new Event('sb:user-gesture-ready'));
+  };
 
   const hideShield = () => {
     if (!loadingShield.isConnected) return;
@@ -26,11 +46,63 @@
     );
   };
 
-  const safetyTimeout = window.setTimeout(hideShield, 15000);
+  const waitForUserGesture = () =>
+    new Promise((resolve) => {
+      if (window.__sbUserGestureReady) {
+        resolve();
+        return;
+      }
+
+      const onContinue = () => {
+        markUserGestureReady();
+        if (shieldStatus) shieldStatus.textContent = 'Entering the Castle...';
+        if (shieldSub) shieldSub.textContent = 'Opening your story...';
+        if (shieldContinueBtn) shieldContinueBtn.disabled = true;
+        if (shieldContinueBtn) shieldContinueBtn.style.opacity = '0.6';
+        resolve();
+      };
+
+      if (shieldContinueBtn) {
+        shieldContinueBtn.addEventListener('click', onContinue, { once: true });
+      } else {
+        // Fallback: if button is missing for any reason, accept one tap on the shield.
+        loadingShield.addEventListener('click', onContinue, { once: true });
+      }
+    });
+
+  const revealContinueButton = () => {
+    if (shieldMessageTimer) {
+      window.clearInterval(shieldMessageTimer);
+      shieldMessageTimer = null;
+    }
+    if (shieldSpinner) shieldSpinner.remove();
+    if (shieldStatus) shieldStatus.textContent = 'Tap Continue To Enter';
+    if (shieldSub) shieldSub.textContent = 'Everything is loaded';
+    if (shieldContinueBtn) {
+      shieldContinueBtn.disabled = false;
+      shieldContinueBtn.classList.remove('shield-cta-hidden');
+    }
+  };
 
   const start = () => {
+    loadingStartedAt = Date.now();
+    if (shieldStatus) {
+      let messageIndex = 0;
+      shieldStatus.textContent = shieldMessages[messageIndex];
+      shieldMessageTimer = window.setInterval(() => {
+        messageIndex = (messageIndex + 1) % shieldMessages.length;
+        shieldStatus.textContent = shieldMessages[messageIndex];
+      }, 650);
+    }
+
     waitForImages().then(() => {
-      window.clearTimeout(safetyTimeout);
+      const elapsed = Date.now() - loadingStartedAt;
+      const remaining = Math.max(0, minLoadingDisplayMs - elapsed);
+      return new Promise((resolve) => window.setTimeout(resolve, remaining));
+    }).then(() => {
+      revealContinueButton();
+      return waitForUserGesture();
+    }).then(() => {
       hideShield();
     });
   };
@@ -41,6 +113,15 @@
     start();
   }
 })();
+
+const waitForAutoplayGesture = () =>
+  new Promise((resolve) => {
+    if (window.__sbUserGestureReady) {
+      resolve();
+      return;
+    }
+    window.addEventListener('sb:user-gesture-ready', () => resolve(), { once: true });
+  });
 
 // ===== Mobile viewport height fix (prevents bottom void on browser UI resize) =====
 const setAppViewportHeight = () => {
@@ -740,7 +821,8 @@ window.addEventListener('load', () => {
 
 // ===== Easter Egg helpers =====
 
-const showEggToast = (message) => {
+const showEggToast = (message, options = {}) => {
+  const variantClass = typeof options.variantClass === 'string' ? options.variantClass.trim() : '';
   let toast = document.getElementById('eggToast');
   if (!toast) {
     toast = document.createElement('div');
@@ -748,6 +830,8 @@ const showEggToast = (message) => {
     toast.className = 'egg-toast';
     document.body.appendChild(toast);
   }
+  toast.className = 'egg-toast';
+  if (variantClass) toast.classList.add(variantClass);
   toast.textContent = message;
   toast.classList.remove('show');
   void toast.offsetWidth;
@@ -1113,11 +1197,13 @@ const leaderboardBtn = document.getElementById('leaderboardBtn');
 const leaderboardModal = document.getElementById('leaderboardModal');
 const closeLeaderboard = document.getElementById('closeLeaderboard');
 const leaderboardBody = document.getElementById('leaderboardBody');
+let latestLeaderboardData = [];
 
 const escapeSvgText = (value) => String(value || '')
   .replace(/&/g, '&amp;')
   .replace(/</g, '&lt;')
   .replace(/>/g, '&gt;');
+const escapeAttrText = (value) => String(value || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 const buildInitialAvatarSvgDataUrl = (initial) => {
   const letter = String(initial || '?').trim().charAt(0).toUpperCase() || '?';
@@ -1137,13 +1223,16 @@ const formatLeaderboardRow = (user, index, isCurrent = false) => {
   const displayName = isCurrent ? '[You]' : username;
 
   // Show avatar (if provided) as a small circle to the left of the name
-  const avatarHtml = user.profilePic
+  const avatarContent = user.profilePic
     ? `<img src="${user.profilePic}" alt="avatar" style="width:40px;height:40px;border-radius:50%;object-fit:cover;margin-right:10px;border:2px solid rgba(255,255,255,0.06);"/>`
     : (function(){
         const initial = (user.nameInitial && String(user.nameInitial).trim().charAt(0).toUpperCase()) || '?';
         const svgAvatar = buildInitialAvatarSvgDataUrl(initial);
         return `<img src="${svgAvatar}" alt="avatar" style="width:40px;height:40px;border-radius:50%;object-fit:cover;margin-right:10px;border:2px solid rgba(255,255,255,0.06);"/>`;
       })();
+  const avatarHtml = (user.uid && !isCurrent)
+    ? `<button type="button" class="leaderboard-avatar-btn" data-user-uid="${escapeAttrText(user.uid)}" data-rank="${index + 1}" title="View profile" style="background:transparent !important;border:0 !important;padding:0 !important;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transform:none !important;transition:none !important;box-shadow:none !important;">${avatarContent}</button>`
+    : avatarContent;
 
   return `
     <tr style="background: ${rowBg}; border-bottom: 1px solid rgba(0,0,0,0.05); ${currentStyle}">
@@ -1199,6 +1288,7 @@ const fetchLeaderboard = async () => {
     const res = await fetch('/api/leaderboard');
     const data = await res.json();
     if (data && data.ok) {
+      latestLeaderboardData = Array.isArray(data.leaderboard) ? data.leaderboard : [];
       if (data.leaderboard.length === 0) {
         leaderboardBody.innerHTML = '<tr><td colspan="3" class="text-center py-10 opacity-30 font-cinzel text-xs uppercase tracking-[0.2em]">No seekers found yet</td></tr>';
       } else {
@@ -1213,9 +1303,40 @@ const fetchLeaderboard = async () => {
     }
   } catch (err) {
     console.error('Failed to fetch leaderboard:', err);
+    latestLeaderboardData = [];
     leaderboardBody.innerHTML = '<tr><td colspan="3" class="text-center py-10 text-red-400/50 font-cinzel text-[10px]">Failed to fetch rankings</td></tr>';
   }
 };
+
+const showDailyLeaderboardRankToast = async () => {
+  if (document.body?.dataset?.page !== 'storybook') return;
+
+  try {
+    const res = await fetch('/api/leaderboard', { cache: 'no-store' });
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !data?.ok || !Array.isArray(data.leaderboard) || data.leaderboard.length === 0) return;
+
+    const myIndex = data.leaderboard.findIndex((entry) => Boolean(entry?.isCurrentUser));
+    if (myIndex === -1) return;
+
+    const rank = myIndex + 1;
+    showEggToast(`You ranked #${rank} on the leaderboard today.`, { variantClass: 'rank-toast' });
+    if (dingSfx) {
+      dingSfx.currentTime = 0;
+      dingSfx.play().catch((e) => console.log('Ding play failed:', e));
+    }
+  } catch (err) {
+    console.warn('Failed to load daily rank toast:', err);
+  }
+};
+
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    waitForAutoplayGesture().then(() => {
+      showDailyLeaderboardRankToast();
+    });
+  }, 700);
+}, { once: true });
 
 if (leaderboardBtn && leaderboardModal) {
   leaderboardBtn.addEventListener('click', () => {
@@ -1242,6 +1363,25 @@ if (leaderboardModal) {
   });
 }
 
+if (leaderboardBody) {
+  leaderboardBody.addEventListener('click', (e) => {
+    const avatarBtn = e.target.closest('.leaderboard-avatar-btn');
+    if (!avatarBtn) return;
+
+    const uid = String(avatarBtn.getAttribute('data-user-uid') || '');
+    const rankFromRow = Number(avatarBtn.getAttribute('data-rank')) || null;
+    const entry = latestLeaderboardData.find((u) => String(u.uid || '') === uid);
+    if (!entry) return;
+
+    if (entry.isCurrentUser) {
+      openProfileModal();
+      return;
+    }
+
+    openReadonlyProfileModal(entry, rankFromRow);
+  });
+}
+
 // ===== Profile Modal & Upload Logic =====
 const profileBtn = document.getElementById('profileBtn');
 const profileModal = document.getElementById('profileModal');
@@ -1252,6 +1392,7 @@ const profileAvatarImg = document.getElementById('profileAvatarImg');
 const profileNameEl = document.getElementById('profileName');
 const profileClassEl = document.getElementById('profileClass');
 const profileRollEl = document.getElementById('profileRoll');
+const profileUidEl = document.getElementById('profileUid');
 const profileAccessEl = document.getElementById('profileAccess');
 const profileRankEl = document.getElementById('profileRank');
 const profileEggsEl = document.getElementById('profileEggs');
@@ -1259,12 +1400,25 @@ const profileGemsEl = document.getElementById('profileGems');
 const profileUsernameInput = document.getElementById('profileUsernameInput');
 const saveProfilePicBtn = document.getElementById('saveProfilePicBtn');
 const profileStatus = document.getElementById('profileStatus');
+const profileAccessRow = profileAccessEl ? profileAccessEl.closest('div') : null;
+const profileUsernameSection = profileUsernameInput ? profileUsernameInput.closest('div') : null;
 
 let stagedProfileDataUrl = null;
+
+const setProfileReadOnlyMode = (readOnly) => {
+  if (profileDropZone) profileDropZone.style.display = readOnly ? 'none' : '';
+  if (profileUsernameSection) profileUsernameSection.style.display = readOnly ? 'none' : '';
+  if (saveProfilePicBtn) saveProfilePicBtn.style.display = readOnly ? 'none' : '';
+  if (profileAccessRow) profileAccessRow.style.display = readOnly ? 'none' : '';
+  if (profileUsernameInput) profileUsernameInput.disabled = readOnly;
+};
 
 const openProfileModal = async () => {
   if (!profileModal) return;
   profileStatus.textContent = '';
+  stagedProfileDataUrl = null;
+  setProfileReadOnlyMode(false);
+  if (profileUidEl) profileUidEl.textContent = '—';
   if (profileRankEl) profileRankEl.textContent = '—';
   if (profileEggsEl) profileEggsEl.textContent = '0';
   if (profileGemsEl) profileGemsEl.textContent = '0';
@@ -1284,6 +1438,7 @@ const openProfileModal = async () => {
       profileNameEl.textContent = data.user.name || '—';
       profileClassEl.textContent = data.user.classSec || '—';
       profileRollEl.textContent = data.user.rollNo || '—';
+      if (profileUidEl) profileUidEl.textContent = data.user.uid || '—';
       profileAccessEl.textContent = data.user.accessMasked || '—';
       if (profileRankEl) profileRankEl.textContent = data.user.rank ? `#${data.user.rank}` : '—';
       if (profileEggsEl) profileEggsEl.textContent = String(data.user.eggs ?? 0);
@@ -1296,16 +1451,50 @@ const openProfileModal = async () => {
         profileAvatarImg.src = buildInitialAvatarSvgDataUrl(initial);
       }
     } else {
+      if (profileUidEl) profileUidEl.textContent = '—';
       if (profileRankEl) profileRankEl.textContent = '—';
       if (profileEggsEl) profileEggsEl.textContent = '0';
       if (profileGemsEl) profileGemsEl.textContent = '0';
     }
   } catch (e) {
     console.warn('Failed to load profile', e);
+    if (profileUidEl) profileUidEl.textContent = '—';
     if (profileRankEl) profileRankEl.textContent = '—';
     if (profileEggsEl) profileEggsEl.textContent = '0';
     if (profileGemsEl) profileGemsEl.textContent = '0';
   }
+};
+
+const openReadonlyProfileModal = (entry, rankFromRow = null) => {
+  if (!profileModal || !entry) return;
+  profileStatus.textContent = '';
+  stagedProfileDataUrl = null;
+  setProfileReadOnlyMode(true);
+
+  profileNameEl.textContent = entry.username || '—';
+  profileClassEl.textContent = entry.classSec || '—';
+  profileRollEl.textContent = '—';
+  if (profileUidEl) profileUidEl.textContent = entry.uid || '—';
+  profileAccessEl.textContent = '—';
+  if (profileRankEl) profileRankEl.textContent = rankFromRow ? `#${rankFromRow}` : '—';
+  if (profileEggsEl) profileEggsEl.textContent = String(entry.eggs ?? 0);
+  if (profileGemsEl) profileGemsEl.textContent = String(entry.gems ?? 0);
+  if (profileUsernameInput) profileUsernameInput.value = entry.username || '';
+
+  if (entry.profilePic) {
+    profileAvatarImg.src = entry.profilePic;
+  } else {
+    const initial = String(entry.nameInitial || entry.username || '?').trim().replace(/^@/, '').charAt(0).toUpperCase() || '?';
+    profileAvatarImg.src = buildInitialAvatarSvgDataUrl(initial);
+  }
+
+  profileModal.classList.remove('hidden');
+  profileModal.classList.add('flex');
+  setTimeout(() => {
+    profileModal.classList.add('opacity-100');
+    const inner = profileModal.querySelector('.modal-content-base');
+    if (inner) inner.classList.add('modal-show');
+  }, 10);
 };
 
 const closeProfileModal = () => {

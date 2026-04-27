@@ -6,11 +6,11 @@ const normalizeClassSec = (value) => normalizeString(value).toUpperCase().replac
 const normalizeAccessCode = (value) => normalizeString(value).toLowerCase().replace(/\s+/g, '');
 const normalizeUsername = (value) => {
   const raw = normalizeString(value);
-  if (!raw) return { username: null, usernameNormalized: null };
+  if (!raw) return { username: undefined, usernameNormalized: undefined };
   const withAt = raw.startsWith('@') ? raw : `@${raw}`;
   const handle = withAt.slice(1);
   if (!/^[A-Za-z0-9_]{2,20}$/.test(handle)) {
-    return { username: null, usernameNormalized: null };
+    return { username: undefined, usernameNormalized: undefined };
   }
   return { username: `@${handle}`, usernameNormalized: `@${handle.toLowerCase()}` };
 };
@@ -24,8 +24,8 @@ const ticketUserSchema = new mongoose.Schema(
     classSecNormalized: { type: String, required: true, index: true },
     accessCode: { type: String, required: true, trim: true },
     accessCodeNormalized: { type: String, required: true, unique: true },
-    username: { type: String, default: null, trim: true },
-    usernameNormalized: { type: String, default: null },
+    username: { type: String, trim: true },
+    usernameNormalized: { type: String },
     easterEggs: { type: [String], default: [] },
     gems: { type: Number, default: 0 },
     // Data URL (base64) for the user's chosen profile picture (kept small)

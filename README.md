@@ -44,7 +44,7 @@ StoryBook is a premium web application that blends immersive storytelling with i
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/your-username/storybook.git
+   git clone https://github.com/sonip362/storybook.git
    cd storybook
    ```
 

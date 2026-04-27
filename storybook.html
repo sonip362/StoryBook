@@ -4,6 +4,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="StoryBook is a creative storytelling platform featuring immersive visual narratives, interactive story scenes, and engaging user experiences.">
+    <meta name="keywords"
+        content="storybook, storytelling, interactive stories, visual narrative, creative writing, story platform">
+    <meta name="author" content="StoryBook">
+    <meta name="robots" content="index, follow">
+    <meta name="theme-color" content="#0b0710">
+
     <title>StoryBook</title>
     <link rel="shortcut icon" href="./assests/images/logo.webp" type="image/x-icon">
     <link rel="stylesheet" href="./dist/output.css">
@@ -82,6 +90,33 @@
             letter-spacing: 1px;
         }
 
+        .shield-cta {
+            margin-top: 0.2rem;
+            padding: 0.65rem 1.2rem;
+            border-radius: 999px;
+            border: 1px solid rgba(245, 210, 192, 0.45);
+            background: rgba(245, 210, 192, 0.12);
+            color: #f5d2c0;
+            font-family: 'Cinzel', serif;
+            font-size: 0.72rem;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+        }
+
+        .shield-cta-hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(8px);
+        }
+
+        .shield-cta:hover {
+            transform: translateY(-1px);
+            background: rgba(245, 210, 192, 0.2);
+            border-color: rgba(245, 210, 192, 0.7);
+        }
+
         /* ===== Modal Animations ===== */
         #resetDataModal,
         #alertModal {
@@ -101,6 +136,7 @@
                 opacity: 0;
                 transform: scale(0.95);
             }
+
             to {
                 opacity: 1;
                 transform: scale(1);
@@ -126,18 +162,17 @@
         .modal-content-base button:active {
             transform: translateY(0);
         }
-
-    
     </style>
 
 </head>
 
-<body>
+<body data-page="storybook">
     <!-- ===== LOADING SHIELD (preloader) ===== -->
     <div id="loadingShield" class="loading-shield active">
         <div class="shield-spinner"></div>
         <span id="shieldStatus" class="shield-text">Preparing the Castle...</span>
-        <span class="shield-sub">First visit may take a moment</span>
+        <span id="shieldSub" class="shield-sub">First visit may take a moment</span>
+        <button id="shieldContinueBtn" type="button" class="shield-cta shield-cta-hidden" disabled>Continue</button>
     </div>
 
     <script>
@@ -211,10 +246,10 @@
         <button id="helpBtn" class="ml-2 p-2 rounded-full hover:bg-white/10 transition-all duration-300"
             title="Help / Tutorial">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                stroke="currentColor" style="width:18px;height:18px;color:#daf0ff;filter:drop-shadow(0 0 4px rgba(102,194,255,0.3));">
+                stroke="currentColor"
+                style="width:18px;height:18px;color:#daf0ff;filter:drop-shadow(0 0 4px rgba(102,194,255,0.3));">
                 <!-- Circle outline -->
-                <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M12 2a10 10 0 100 20 10 10 0 000-20z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 2a10 10 0 100 20 10 10 0 000-20z" />
                 <!-- Question mark -->
                 <path stroke-linecap="round" stroke-linejoin="round"
                     d="M12 8a1 1 0 110 2 1 1 0 010-2zm0 4a1 1 0 00-1 1v3a1 1 0 002 0v-3a1 1 0 00-1-1z" />
@@ -225,17 +260,19 @@
             title="Profile">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
                 style="width:18px;height:18px;color:#ffdfea;filter:drop-shadow(0 0 4px rgba(255,255,255,0.12));">
-                <path d="M12 12c2.761 0 5-2.239 5-5s-2.239-5-5-5-5 2.239-5 5 2.239 5 5 5zm0 2c-4.418 0-8 2.239-8 5v1h16v-1c0-2.761-3.582-5-8-5z"/>
+                <path
+                    d="M12 12c2.761 0 5-2.239 5-5s-2.239-5-5-5-5 2.239-5 5 2.239 5 5 5zm0 2c-4.418 0-8 2.239-8 5v1h16v-1c0-2.761-3.582-5-8-5z" />
             </svg>
         </button>
         <!-- Download PDF Button -->
         <button id="downloadPdfBtn" class="ml-2 p-2 rounded-full hover:bg-white/10 transition-all duration-300"
             title="Download as PDF">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                stroke="currentColor" style="width:18px;height:18px;color:#90ee90;filter:drop-shadow(0 0 4px rgba(144,238,144,0.3));">
-                <path d="M12 3V15" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M7 10L12 15L17 10" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M5 19H19"  stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                stroke="currentColor"
+                style="width:18px;height:18px;color:#90ee90;filter:drop-shadow(0 0 4px rgba(144,238,144,0.3));">
+                <path d="M12 3V15" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M7 10L12 15L17 10" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M5 19H19" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
         </button>
     </header>
@@ -258,7 +295,7 @@
             </div>
             <!-- Table Container -->
             <div class="max-h-[50vh] overflow-y-auto p-4 custom-scrollbar">
-           
+
                 <table class="w-full text-left font-serif border-separate border-spacing-y-2">
                     <thead class="text-[10px] uppercase tracking-[0.3em] font-bold opacity-50">
                         <tr>
@@ -287,7 +324,8 @@
             <!-- Header -->
             <div class="header-title px-8 py-7 flex justify-between items-center bg-black/5">
                 <h2 class="font-cinzel text-lg tracking-[0.25em]">How to Play</h2>
-                <button id="closeHelp" class="w-10 h-10 flex items-center justify-center rounded-full bg-black/10 text-black hover:bg-black/20 transition-all cursor-pointer">
+                <button id="closeHelp"
+                    class="w-10 h-10 flex items-center justify-center rounded-full bg-black/10 text-black hover:bg-black/20 transition-all cursor-pointer">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
@@ -311,19 +349,24 @@
     <!-- Profile Modal -->
     <div id="profileModal"
         class="fixed inset-0 z-[420] hidden bg-black/60 backdrop-blur-md flex items-center justify-center p-4 transition-all duration-500 opacity-0">
-        <div class="modal-content-base leaderboard-light rounded-[20px] w-full max-w-sm overflow-hidden shadow-2xl p-6 text-center">
+        <div
+            class="modal-content-base leaderboard-light rounded-[20px] w-full max-w-sm overflow-hidden shadow-2xl p-6 text-center">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                <h3 class="font-cinzel text-lg">Your Profile</h3>
-                <button id="closeProfileBtn" class="w-9 h-9 flex items-center justify-center rounded-full bg-black/10 text-black hover:bg-black/20 transition-all cursor-pointer">
+                <h3 class="font-cinzel text-lg">Profile</h3>
+                <button id="closeProfileBtn"
+                    class="w-9 h-9 flex items-center justify-center rounded-full bg-black/10 text-black hover:bg-black/20 transition-all cursor-pointer">
                     ✕
                 </button>
             </div>
             <div style="display:flex; flex-direction:column; align-items:center; gap:12px;">
-                <div id="profileAvatar" style="width:96px;height:96px;border-radius:50%;overflow:hidden;background:linear-gradient(135deg,#222,#444);display:flex;align-items:center;justify-content:center;">
-                    <img id="profileAvatarImg" src="./assests/images/logo.webp" alt="avatar" style="width:100%;height:100%;object-fit:cover;display:block;" />
+                <div id="profileAvatar"
+                    style="width:96px;height:96px;border-radius:50%;overflow:hidden;background:linear-gradient(135deg,#222,#444);display:flex;align-items:center;justify-content:center;">
+                    <img id="profileAvatarImg" src="./assests/images/logo.webp" alt="avatar"
+                        style="width:100%;height:100%;object-fit:cover;display:block;" />
                 </div>
                 <!-- Drag & drop area (click to browse) -->
-                <div id="profileDropZone" class="profile-dropzone" role="button" tabindex="0" aria-label="Upload profile image">
+                <div id="profileDropZone" class="profile-dropzone" role="button" tabindex="0"
+                    aria-label="Upload profile image">
                     <input id="profileFileInput" type="file" accept="image/*" style="display:none;" />
                     <div class="drop-instructions">Drag &amp; drop image here, or click to browse</div>
                 </div>
@@ -331,19 +374,28 @@
                     <div style="margin-bottom:6px;"><strong>Name:</strong> <span id="profileName">—</span></div>
                     <div style="margin-bottom:6px;"><strong>Class:</strong> <span id="profileClass">—</span></div>
                     <div style="margin-bottom:6px;"><strong>Roll No:</strong> <span id="profileRoll">—</span></div>
-                    <div style="margin-bottom:6px;"><strong>Access-Code:</strong> <span id="profileAccess">—</span></div>
-                    <div style="margin-bottom:6px;"><strong>Leaderboard Rank:</strong> <span id="profileRank">—</span></div>
-                    <div style="margin-bottom:6px;"><strong>Easter Eggs Found:</strong> <span id="profileEggs">0</span></div>
+                    <div style="margin-bottom:6px;"><strong>UID:</strong> <span id="profileUid">—</span></div>
+                    <div style="margin-bottom:6px;"><strong>Access-Code:</strong> <span id="profileAccess">—</span>
+                    </div>
+                    <div style="margin-bottom:6px;"><strong>Leaderboard Rank:</strong> <span id="profileRank">—</span>
+                    </div>
+                    <div style="margin-bottom:6px;"><strong>Easter Eggs Found:</strong> <span id="profileEggs">0</span>
+                    </div>
                     <div style="margin-bottom:6px;"><strong>Gems Found:</strong> <span id="profileGems">0</span></div>
                 </div>
                 <div style="text-align:left; width:100%; margin-top:6px;">
-                    <label for="profileUsernameInput" style="display:block; font-weight:700; margin-bottom:6px;">Username (public):</label>
-                    <input id="profileUsernameInput" type="text" maxlength="21" placeholder="@yourname" style="width:100%; padding:8px; border-radius:8px; border:1px solid rgba(0,0,0,0.08); font-family: 'Cinzel', serif;" />
-                    <div style="font-size:0.78rem; color:#6b4b3b; margin-top:6px;">Choose a username (2-20 chars after @). Letters, numbers and underscores only. This appears on leaderboard.</div>
+                    <label for="profileUsernameInput"
+                        style="display:block; font-weight:700; margin-bottom:6px;">Username (public):</label>
+                    <input id="profileUsernameInput" type="text" maxlength="21" placeholder="@yourname"
+                        style="width:100%; padding:8px; border-radius:8px; border:1px solid rgba(0,0,0,0.08); font-family: 'Cinzel', serif;" />
+                    <div style="font-size:0.78rem; color:#6b4b3b; margin-top:6px;">Choose a username (2-20 chars after
+                        @). Letters, numbers and underscores only. This appears on leaderboard.</div>
                 </div>
                 <div style="display:flex; gap:8px; width:100%; justify-content:center;">
-                    <button id="saveProfilePicBtn" class="px-4 py-2 rounded-lg" style="background:#2a5a3a;color:#fff;font-family:'Cinzel',serif;">Save</button>
-                    <button id="cancelProfileBtn" class="px-4 py-2 rounded-lg" style="background:#4b4b4b;color:#fff;font-family:'Cinzel',serif;">Close</button>
+                    <button id="saveProfilePicBtn" class="px-4 py-2 rounded-lg"
+                        style="background:#2a5a3a;color:#fff;font-family:'Cinzel',serif;">Save</button>
+                    <button id="cancelProfileBtn" class="px-4 py-2 rounded-lg"
+                        style="background:#4b4b4b;color:#fff;font-family:'Cinzel',serif;">Close</button>
                 </div>
                 <p id="profileStatus" style="font-size:0.85rem;color:#333;min-height:20px"></p>
             </div>
@@ -353,12 +405,17 @@
     <!-- Confirm Purchase Modal -->
     <div id="confirmPurchaseModal"
         class="fixed inset-0 z-[450] hidden bg-black/60 backdrop-blur-md flex items-center justify-center p-4 transition-all duration-500 opacity-0">
-        <div class="modal-content-base leaderboard-light rounded-[24px] w-full max-w-sm overflow-hidden shadow-2xl p-6 text-center">
+        <div
+            class="modal-content-base leaderboard-light rounded-[24px] w-full max-w-sm overflow-hidden shadow-2xl p-6 text-center">
             <h3 class="font-cinzel text-lg mb-3">Reveal Answer</h3>
-            <p style="color:#642100; margin-bottom:18px;">Spend <strong>300</strong> gems to reveal the magic word and remove the bat. You must retain at least <strong>300</strong> gems after the purchase; the purchase will be blocked if your balance would fall below that.</p>
+            <p style="color:#642100; margin-bottom:18px;">Spend <strong>300</strong> gems to reveal the magic word and
+                remove the bat. You must retain at least <strong>300</strong> gems after the purchase; the purchase will
+                be blocked if your balance would fall below that.</p>
             <div style="display:flex; gap:12px; justify-content:center;">
-                <button id="confirmPurchaseBtn" class="px-4 py-2 rounded-lg" style="background:#2a5a3a;color:#fff;font-family:'Cinzel',serif;">Confirm</button>
-                <button id="cancelPurchaseBtn" class="px-4 py-2 rounded-lg" style="background:#4b2a2a;color:#fff;font-family:'Cinzel',serif;">Cancel</button>
+                <button id="confirmPurchaseBtn" class="px-4 py-2 rounded-lg"
+                    style="background:#2a5a3a;color:#fff;font-family:'Cinzel',serif;">Confirm</button>
+                <button id="cancelPurchaseBtn" class="px-4 py-2 rounded-lg"
+                    style="background:#4b2a2a;color:#fff;font-family:'Cinzel',serif;">Cancel</button>
             </div>
         </div>
     </div>
@@ -366,12 +423,16 @@
     <!-- Reset Data Confirmation Modal -->
     <div id="resetDataModal"
         class="fixed inset-0 z-[450] hidden bg-black/60 backdrop-blur-md flex items-center justify-center p-4 transition-all duration-500 opacity-0">
-        <div class="modal-content-base leaderboard-light rounded-[24px] w-full max-w-sm overflow-hidden shadow-2xl p-6 text-center">
+        <div
+            class="modal-content-base leaderboard-light rounded-[24px] w-full max-w-sm overflow-hidden shadow-2xl p-6 text-center">
             <h3 class="font-cinzel text-lg mb-3" style="color:#833711;">Delete All Progress?</h3>
-            <p style="color:#642100; margin-bottom:18px;">Are you sure you want to delete all your progress? Your gems and discovered easter eggs will be reset to zero. <strong>This cannot be undone.</strong></p>
+            <p style="color:#642100; margin-bottom:18px;">Are you sure you want to delete all your progress? Your gems
+                and discovered easter eggs will be reset to zero. <strong>This cannot be undone.</strong></p>
             <div style="display:flex; gap:12px; justify-content:center;">
-                <button id="confirmResetBtn" class="px-4 py-2 rounded-lg" style="background:#8b3a1a;color:#fff;font-family:'Cinzel',serif;">Reset</button>
-                <button id="cancelResetBtn" class="px-4 py-2 rounded-lg" style="background:#4b4b4b;color:#fff;font-family:'Cinzel',serif;">Cancel</button>
+                <button id="confirmResetBtn" class="px-4 py-2 rounded-lg"
+                    style="background:#8b3a1a;color:#fff;font-family:'Cinzel',serif;">Reset</button>
+                <button id="cancelResetBtn" class="px-4 py-2 rounded-lg"
+                    style="background:#4b4b4b;color:#fff;font-family:'Cinzel',serif;">Cancel</button>
             </div>
         </div>
     </div>
@@ -379,11 +440,13 @@
     <!-- Error/Success Alert Modal -->
     <div id="alertModal"
         class="fixed inset-0 z-[450] hidden bg-black/60 backdrop-blur-md flex items-center justify-center p-4 transition-all duration-500 opacity-0">
-        <div class="modal-content-base leaderboard-light rounded-[24px] w-full max-w-sm overflow-hidden shadow-2xl p-6 text-center">
+        <div
+            class="modal-content-base leaderboard-light rounded-[24px] w-full max-w-sm overflow-hidden shadow-2xl p-6 text-center">
             <h3 id="alertTitle" class="font-cinzel text-lg mb-3" style="color:#833711;">Alert</h3>
             <p id="alertMessage" style="color:#642100; margin-bottom:18px;"></p>
             <div style="display:flex; gap:12px; justify-content:center;">
-                <button id="alertOkBtn" class="px-6 py-2 rounded-lg" style="background:#5a4a3a;color:#fff;font-family:'Cinzel',serif;">OK</button>
+                <button id="alertOkBtn" class="px-6 py-2 rounded-lg"
+                    style="background:#5a4a3a;color:#fff;font-family:'Cinzel',serif;">OK</button>
             </div>
         </div>
     </div>
@@ -419,7 +482,8 @@
                     <div class="content-wrapper">
                         <!-- Castle Section -->
                         <div class="castle-section" style="overflow: hidden;">
-                            <img class="castle-image" src="./assests/images/dracula-castle-bg.webp" alt="Dracula Castle">
+                            <img class="castle-image" src="./assests/images/dracula-castle-bg.webp"
+                                alt="Dracula Castle">
 
                             <p class="castle-text">Professor; Theres no ghost nor Dracula. Its just an old castle.,The
                                 teacher said.
@@ -462,7 +526,8 @@
                                     huge loss to Vlad's Kingdom.)
                                 </p>
                                 <div class="war-image-container">
-                                    <img id="draculaImg" src="./assests/images/war.webp" alt="War" class="dracula-image">
+                                    <img id="draculaImg" src="./assests/images/war.webp" alt="War"
+                                        class="dracula-image">
                                 </div>
                                 <p class="castle-text dracula-story" style="text-align: center; margin-top: 20px;">
                                     Vlad: I stand straight, kill me but I will be back for revenge.
@@ -493,7 +558,7 @@
 
                             </div>
 
-                        
+
 
                             <!-- Final Section: New King-Castle -->
                             <div class="dracula-row" style="margin-top: 60px;">
@@ -557,19 +622,23 @@
                                     sleep the next room.
 
                                 </p>
-                                
+
                                 <!-- Bat easter egg section -->
                                 <div id="batEasterEgg" style="position: relative; margin: 20px 0; text-align: center;">
-                                    <img id="batImage" src="./assests/images/bat.webp" alt="Bat" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; z-index: 1500; pointer-events: none;">
-                                    <p style="text-align: center; margin: 15px 0; font-family: 'Cinzel', serif; font-size: 1rem; color: #300000; letter-spacing: 0.8px;">
+                                    <img id="batImage" src="./assests/images/bat.webp" alt="Bat"
+                                        style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; z-index: 1500; pointer-events: none;">
+                                    <p
+                                        style="text-align: center; margin: 15px 0; font-family: 'Cinzel', serif; font-size: 1rem; color: #300000; letter-spacing: 0.8px;">
                                         A bat is flying around the room. Maybe there's a way to make it disappear?
                                         <br>
                                         (Hint-1 : Try entering the magic word Dracula is scared of ...)
                                         <br>
                                         (Hint-2 : The new language we learnt but in english...)
                                     </p>
-                                    <div style="margin: 20px auto; max-width: 360px; display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap;">
-                                        <input type="text" id="batRemovalInput" placeholder="Enter the magic word..." style="padding: 10px 15px; border: 2px solid rgba(245, 210, 192, 0.3); 
+                                    <div
+                                        style="margin: 20px auto; max-width: 360px; display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap;">
+                                        <input type="text" id="batRemovalInput" placeholder="Enter the magic word..."
+                                            style="padding: 10px 15px; border: 2px solid rgba(245, 210, 192, 0.3); 
                                               background: rgba(15, 10, 5, 0.8); color: #fc7532; 
                                               border-radius: 8px; font-family: monospace; font-size: 1rem;
                                               text-align: center; width: 200px; margin-bottom: 10px;"
@@ -581,66 +650,104 @@
                                                cursor: pointer; font-family: 'Cinzel', serif;">
                                             Remove Bat
                                         </button>
-                                        <button id="buyAnswerBtn" onclick="buyAnswerWithGems()" style="padding: 10px 12px; 
+                                        <button id="buyAnswerBtn" onclick="buyAnswerWithGems()"
+                                            style="padding: 10px 12px; 
                                                background: linear-gradient(135deg,#0b486b,#3b8d99); color:#fff; border-radius:8px; border:1px solid rgba(255,255,255,0.06); font-family:'Cinzel', serif; cursor:pointer;">
                                             Unlock answer (300 gems)
                                         </button>
                                     </div>
                                 </div>
-                                
+
                                 <!-- White flash effect overlay -->
-                                  <div id="whiteFlash" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+                                <div id="whiteFlash" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
                                       background-color: rgb(255, 249, 249); z-index: 2000; display: none;"></div>
-                                
+
                                 <!-- Crossword Puzzle Section -->
-                        <div id="crosswordSection" class="quiz-container dracula-quiz" style="display:none; text-align: center; margin-top: 2rem;">
-                            <h3 class="font-cinzel text-lg" style="color:#833711; margin-bottom: 1rem;">Crossword Puzzle</h3>
-                            <div style="margin-bottom: 1rem; text-align: left; display: inline-block; max-width: 300px;">
-                                <p><strong>Across 1:</strong> One who cooks?</p>
-                                <p><strong>Down 1:</strong> So, what we will always _______ victory.</p>
-                            </div>
-                            <!-- Simple 4x7 grid: CHEF across row1, CONQUER down column1 -->
-                            <table id="crosswordGrid" style="margin: 0 auto; border-collapse: collapse;">
-                                <tbody>
-                                    <!-- Row 1: CHEF across (4 cells) -->
-                                    <tr>
-                                        <td><input type="text" maxlength="1" id="cell-1-1" value="C" readonly style="width:30px;height:30px;text-align:center;font-size:1.2rem;"/></td>
-                                        <td><input type="text" maxlength="1" id="cell-1-2" style="width:30px;height:30px;text-align:center;font-size:1.2rem;"/></td>
-                                        <td><input type="text" maxlength="1" id="cell-1-3" style="width:30px;height:30px;text-align:center;font-size:1.2rem;"/></td>
-                                        <td><input type="text" maxlength="1" id="cell-1-4" style="width:30px;height:30px;text-align:center;font-size:1.2rem;"/></td>
-                                    </tr>
-                                    <!-- Rows 2-7: only column 1 for CONQUER down, other cells blocked -->
-                                    <tr>
-                                        <td><input type="text" maxlength="1" id="cell-2-1" style="width:30px;height:30px;text-align:center;font-size:1.2rem;"/></td>
-                                        <td class="blocked"></td><td class="blocked"></td><td class="blocked"></td>
-                                    </tr>
-                                    <tr>
-                                        <td><input type="text" maxlength="1" id="cell-3-1" style="width:30px;height:30px;text-align:center;font-size:1.2rem;"/></td>
-                                        <td class="blocked"></td><td class="blocked"></td><td class="blocked"></td>
-                                    </tr>
-                                    <tr>
-                                        <td><input type="text" maxlength="1" id="cell-4-1" style="width:30px;height:30px;text-align:center;font-size:1.2rem;"/></td>
-                                        <td class="blocked"></td><td class="blocked"></td><td class="blocked"></td>
-                                    </tr>
-                                    <tr>
-                                        <td><input type="text" maxlength="1" id="cell-5-1" style="width:30px;height:30px;text-align:center;font-size:1.2rem;"/></td>
-                                        <td class="blocked"></td><td class="blocked"></td><td class="blocked"></td>
-                                    </tr>
-                                    <tr>
-                                        <td><input type="text" maxlength="1" id="cell-6-1" style="width:30px;height:30px;text-align:center;font-size:1.2rem;"/></td>
-                                        <td class="blocked"></td><td class="blocked"></td><td class="blocked"></td>
-                                    </tr>
-                                    <tr>
-                                        <td><input type="text" maxlength="1" id="cell-7-1" style="width:30px;height:30px;text-align:center;font-size:1.2rem;"/></td>
-                                        <td class="blocked"></td><td class="blocked"></td><td class="blocked"></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                            <button id="checkCrosswordBtn" style="margin-top:0.8rem;padding: 6px 12px; background:#5a2104; color:#fff; border:none; border-radius:4px; cursor:pointer;">
-                                Check Answers
-                            </button>
-                            <p id="crosswordFeedback" style="margin-top: 0.5rem; color:#ffd700; font-family:'Cinzel',serif;"></p>
-                        </div>
+                                <div id="crosswordSection" class="quiz-container dracula-quiz"
+                                    style="display:none; text-align: center; margin-top: 2rem;">
+                                    <h3 class="font-cinzel text-lg" style="color:#833711; margin-bottom: 1rem;">
+                                        Crossword Puzzle</h3>
+                                    <div
+                                        style="margin-bottom: 1rem; text-align: left; display: inline-block; max-width: 300px;">
+                                        <p><strong>Across 1:</strong> One who cooks?</p>
+                                        <p><strong>Down 1:</strong> So, what we will always _______ victory.</p>
+                                    </div>
+                                    <!-- Simple 4x7 grid: CHEF across row1, CONQUER down column1 -->
+                                    <table id="crosswordGrid" style="margin: 0 auto; border-collapse: collapse;">
+                                        <tbody>
+                                            <!-- Row 1: CHEF across (4 cells) -->
+                                            <tr>
+                                                <td><input type="text" maxlength="1" id="cell-1-1" value="C" readonly
+                                                        style="width:30px;height:30px;text-align:center;font-size:1.2rem;" />
+                                                </td>
+                                                <td><input type="text" maxlength="1" id="cell-1-2"
+                                                        style="width:30px;height:30px;text-align:center;font-size:1.2rem;" />
+                                                </td>
+                                                <td><input type="text" maxlength="1" id="cell-1-3"
+                                                        style="width:30px;height:30px;text-align:center;font-size:1.2rem;" />
+                                                </td>
+                                                <td><input type="text" maxlength="1" id="cell-1-4"
+                                                        style="width:30px;height:30px;text-align:center;font-size:1.2rem;" />
+                                                </td>
+                                            </tr>
+                                            <!-- Rows 2-7: only column 1 for CONQUER down, other cells blocked -->
+                                            <tr>
+                                                <td><input type="text" maxlength="1" id="cell-2-1"
+                                                        style="width:30px;height:30px;text-align:center;font-size:1.2rem;" />
+                                                </td>
+                                                <td class="blocked"></td>
+                                                <td class="blocked"></td>
+                                                <td class="blocked"></td>
+                                            </tr>
+                                            <tr>
+                                                <td><input type="text" maxlength="1" id="cell-3-1"
+                                                        style="width:30px;height:30px;text-align:center;font-size:1.2rem;" />
+                                                </td>
+                                                <td class="blocked"></td>
+                                                <td class="blocked"></td>
+                                                <td class="blocked"></td>
+                                            </tr>
+                                            <tr>
+                                                <td><input type="text" maxlength="1" id="cell-4-1"
+                                                        style="width:30px;height:30px;text-align:center;font-size:1.2rem;" />
+                                                </td>
+                                                <td class="blocked"></td>
+                                                <td class="blocked"></td>
+                                                <td class="blocked"></td>
+                                            </tr>
+                                            <tr>
+                                                <td><input type="text" maxlength="1" id="cell-5-1"
+                                                        style="width:30px;height:30px;text-align:center;font-size:1.2rem;" />
+                                                </td>
+                                                <td class="blocked"></td>
+                                                <td class="blocked"></td>
+                                                <td class="blocked"></td>
+                                            </tr>
+                                            <tr>
+                                                <td><input type="text" maxlength="1" id="cell-6-1"
+                                                        style="width:30px;height:30px;text-align:center;font-size:1.2rem;" />
+                                                </td>
+                                                <td class="blocked"></td>
+                                                <td class="blocked"></td>
+                                                <td class="blocked"></td>
+                                            </tr>
+                                            <tr>
+                                                <td><input type="text" maxlength="1" id="cell-7-1"
+                                                        style="width:30px;height:30px;text-align:center;font-size:1.2rem;" />
+                                                </td>
+                                                <td class="blocked"></td>
+                                                <td class="blocked"></td>
+                                                <td class="blocked"></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                    <button id="checkCrosswordBtn"
+                                        style="margin-top:0.8rem;padding: 6px 12px; background:#5a2104; color:#fff; border:none; border-radius:4px; cursor:pointer;">
+                                        Check Answers
+                                    </button>
+                                    <p id="crosswordFeedback"
+                                        style="margin-top: 0.5rem; color:#ffd700; font-family:'Cinzel',serif;"></p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -716,7 +823,8 @@
             class="fixed inset-0 z-[300] hidden bg-black/30 backdrop-blur-md transition-all duration-500">
             <div id="modalContent"
                 class="modal-content-base w-[92vw] max-w-[480px] aspect-[9/16] md:aspect-[4/5] bg-white rounded-[40px] p-2 shadow-[0_35px_80px_-15px_rgba(0,0,0,0.5)] border-[8px] border-white">
-                <div class="relative w-full h-full rounded-[32px] overflow-hidden bg-gray-100 flex items-center justify-center">
+                <div
+                    class="relative w-full h-full rounded-[32px] overflow-hidden bg-gray-100 flex items-center justify-center">
                     <p class="text-center text-black font-cinzel text-lg px-4">
                         Secret message: You are a donkey. LOL . Atleast you found the easter egg! Congrats!
                     </p>

@@ -1,16 +1,40 @@
-[
-  {
-    "_id": "65f1a2b3c4d5e6f7a8b90123",
-    "name": "sonip",
-    "rollNo": 38,
-    "classSec": "6E",
-    "accessCode": "AB9x7zK2"
-  },
-  {
-    "_id": "f60e618b-f50e-4082-852c-f63ab6eb396a",
-    "name": "John Doe",
-    "rollNo": 30,
-    "classSec": "6E",
-    "accessCode": "obB9Ayty"
-  }
-]
+{
+  "customers": [
+    {
+      "name": "rohan",
+      "class_section": "6E",
+      "roll_no": 30,
+      "status": "paid-BETA",
+      "amount": 5,
+      "access_code": "XWY02",
+      "stories_unlocked": 5
+    },
+    {
+      "name": "archit",
+      "class_section": "6E",
+      "roll_no": 6,
+      "status": "paid",
+      "amount": 2,
+      "access_code": "KC68",
+      "stories_unlocked": 2
+    },
+    {
+      "name": "anish",
+      "class_section": "6E",
+      "roll_no": 1,
+      "status": "paid",
+      "amount": 1,
+      "access_code": "XP04",
+      "stories_unlocked": 2
+    },
+    {
+      "name": "ankush",
+      "class_section": "6E",
+      "roll_no": 2,
+      "status": "paid",
+      "amount": 1,
+      "access_code": "XP05",
+      "stories_unlocked": 1
+    }
+  ]
+}

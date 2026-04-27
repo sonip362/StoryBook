@@ -470,6 +470,7 @@ app.get('/api/leaderboard', async (req, res) => {
         normalizeRollNo(u.rollNo) === normalizeRollNo(sessionUser.rollNo) &&
         normalizeClassSec(u.classSec) === normalizeClassSec(sessionUser.classSec);
       return {
+        uid: String(u._id),
         username: usernameData.username || fallbackUsername,
         classSec: u.classSec,
         eggs: eggsCount,
@@ -525,6 +526,7 @@ app.get('/api/user/me', async (req, res) => {
     const rank = rankIndex >= 0 ? rankIndex + 1 : null;
 
     return res.json({ ok: true, user: {
+      uid: String(user._id),
       name: user.name,
       rollNo: user.rollNo,
       classSec: user.classSec,
