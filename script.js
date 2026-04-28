@@ -225,10 +225,10 @@ const ticketForm = document.getElementById('ticketForm');
 if (ticketForm) {
   const rememberEl = document.getElementById('rememberMe');
   if (rememberEl) {
-    rememberEl.checked = localStorage.getItem('sb_remember') === 'true';
+    rememberEl.checked = localStorage.getItem('sb_remember') !== 'false';
     rememberEl.addEventListener('change', () => {
       if (rememberEl.checked) localStorage.setItem('sb_remember', 'true');
-      else localStorage.removeItem('sb_remember');
+      else localStorage.setItem('sb_remember', 'false');
     });
   }
 
@@ -1213,6 +1213,11 @@ const buildInitialAvatarSvgDataUrl = (initial) => {
 
 // Format a leaderboard row. If `isCurrent` is true, the row gets a green border and the name is wrapped in brackets.
 const formatLeaderboardRow = (user, index, isCurrent = false) => {
+  const GOLD_UIDS = new Set([
+    '69ef38053af4cbf80903b854',
+    '69dfa9edb84aaf9fdec185e9'
+  ]);
+  const isGoldUser = GOLD_UIDS.has(String(user?.uid || ''));
   const isTop3 = index < 3;
   // Use professional dark accent colors for ranking
   const rankColor = isTop3 ? ['#b8860b', '#707070', '#8b4513'][index] : '#1a0f05cc';
@@ -1221,6 +1226,7 @@ const formatLeaderboardRow = (user, index, isCurrent = false) => {
   const currentStyle = isCurrent ? 'background: rgba(0, 211, 0, 0.15);' : 'background: transparent;';
   const username = user.username || '@seeker';
   const displayName = isCurrent ? '[You]' : username;
+  const usernameColor = isGoldUser ? '#d4af37' : '#1a0f05';
 
   // Show avatar (if provided) as a small circle to the left of the name
   const avatarContent = user.profilePic
@@ -1243,7 +1249,7 @@ const formatLeaderboardRow = (user, index, isCurrent = false) => {
         <div class="flex items-center">
           ${avatarHtml}
           <div class="flex flex-col">
-            <span class="text-base tracking-wide capitalize text-[#1a0f05] font-bold">${displayName}</span>
+            <span class="text-base tracking-wide capitalize font-bold" style="color:${usernameColor}">${displayName}</span>
             <span class="text-[10px] text-[#1a0f05]/60 uppercase font-bold tracking-[0.2em]">${user.classSec}</span>
           </div>
         </div>

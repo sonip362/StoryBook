@@ -1,112 +1,131 @@
-# 🏰 StoryBook
+# StoryBook
 
-**A gothic, interactive digital storybook experience with gamified exploration and secure access.**
+StoryBook is a gothic interactive web experience built with vanilla HTML, CSS, and JavaScript on the front end, and an Express + MongoDB backend for ticket verification, sessions, and player progress.
 
-StoryBook is a premium web application that blends immersive storytelling with interactive elements. Users navigate through a hauntingly beautiful interface, unlocking "Easter Eggs" as they explore the lore of the castle and its inhabitants.
+The app includes:
 
----
+- A ticket login flow at `qr-login.html`
+- The main story experience at `storybook.html`
+- Easter egg tracking, gem rewards, profiles, and a leaderboard
+- Admin utilities for creating and migrating users
+- A loading shield, ambient audio, and mobile-friendly interaction handling
 
-## ✨ Features
+## Tech Stack
 
-- **🕯️ Immersive Atmosphere**: Custom gothic design with Cinzel and Cormorant Garamond typography, floating particles, and ambient background music.
-- **🧛 Interactive Storytelling**: Dynamic content with custom CSS shapes and interactive character elements.
-- **🐣 Easter Egg System**: A gamified exploration system. Discover hidden secrets to unlock progress, tracked and saved to your profile.
-- **🔐 Secure Access**: QR-code based ticket login system with session persistence and "Remember Me" functionality.
-- **🛡️ Loading Shield**: A custom-themed transition overlay that elegantly manages backend cold-starts (Render.com) while keeping the user immersed.
-- **📱 Responsive Design**: Fully optimized for mobile and desktop, ensuring the atmosphere is preserved on any screen.
-- **🛠️ Admin Panel**: Backend tools for administrators to create users, manage tickets, and migrate data.
+- Frontend: HTML5, JavaScript, Tailwind CSS output in `dist/output.css`
+- Backend: Node.js, Express, MongoDB, Mongoose
+- Other libraries: `cors`, `dotenv`, `bcryptjs`
 
----
-
-## 🛠️ Technology Stack
-
-### Frontend
-- **Plain HTML5/JS**: Core structure and logic.
-- **Vanilla CSS + Tailwind CSS**: Modern styling with a custom design system.
-- **Particles.js**: For ambient visual effects.
-- **Google Fonts**: Cinzel & Cormorant Garamond.
-
-### Backend
-- **Node.js & Express**: API and server-side logic.
-- **MongoDB & Mongoose**: Secure data storage for users, sessions, and game progress.
-- **Bcrypt.js**: Security for access code hashing.
-- **CORS**: Configured for cross-origin communication between GitHub Pages (frontend) and Render (backend).
-
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-- [Node.js](https://nodejs.org/) (v16+)
-- [MongoDB](https://www.mongodb.com/) (Local instance or Atlas URI)
-
-### Installation
-
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/sonip362/storybook.git
-   cd storybook
-   ```
-
-2. **Install dependencies**:
-   ```bash
-   npm install
-   ```
-
-3. **Configure Environment Variables**:
-   Create a `.env` file in the root directory:
-   ```env
-   PORT=8080
-   MONGODB_URI=your_mongodb_connection_string
-   ```
-
-4. **Build CSS**:
-   ```bash
-   npm run css:build
-   ```
-
-5. **Start the server**:
-   ```bash
-   # Development mode
-   npm run dev
-
-   # Production mode
-   npm start
-   ```
-
----
-
-## 📂 Project Structure
+## Project Structure
 
 ```text
-├── admin/            # Admin tools and user management scripts
-├── assests/          # Media, images, and audio files
-├── dist/             # Compiled Tailwind CSS output
-├── models/           # Mongoose schemas (User, Session)
-├── index.html        # Trial-page entry point
-├── or-login.html     # Secure login portal
-├── storybook.html    # The main interactive experience
-├── server.js         # Express server and API endpoints
-├── script.js         # Main frontend logic
-└── trial-script.js   # Logic for the trial preview page
+admin/               Admin pages and maintenance scripts
+assests/             Static media files
+dist/                Compiled CSS output
+models/              Mongoose models
+index.html           Trial or entry page
+qr-login.html        Ticket login page
+storybook.html       Main story experience
+script.js            Frontend behavior
+server.js            Express server and API routes
+style.css            Tailwind input stylesheet
+story.txt            Story content
+users.json           Migration source data for admin scripts
 ```
 
----
+## Requirements
 
-## 🔑 Admin Commands
+- Node.js 16 or newer
+- MongoDB connection string
 
-The project includes utility scripts for managing the system:
+## Setup
 
-- **Create a User**: `npm run admin:create-user`
-- **Lookup User Progress**: `npm run admin:lookup-user`
-- **Migrate Database**: `npm run admin:migrate-users`
+1. Install dependencies:
 
----
+```bash
+npm install
+```
 
-## 📜 Metadata & SEO
-- **Title**: StoryBook — An Interactive Gothic Legend
-- **Description**: Experience the mystery. Explore the castle, find the eggs, and unlock the story.
+2. Create a `.env` file in the project root:
 
----
+```env
+PORT=8080
+MONGODB_URI=your_mongodb_connection_string
+```
 
-*Built with  ❤️ by the StoryBook Team.*
+`server.js` also accepts `MONGODB-URL` if that is what your environment uses.
+
+3. Build the CSS:
+
+```bash
+npm run css:build
+```
+
+4. Start the server:
+
+```bash
+npm start
+```
+
+The `start` script builds CSS and runs `server.js`. The `dev` script does the same.
+
+## Available Scripts
+
+- `npm start` - build CSS and start the server
+- `npm run dev` - build CSS and start the server
+- `npm run server` - start the server without rebuilding CSS
+- `npm run css:build` - compile `style.css` into `dist/output.css`
+- `npm run css:watch` - watch `style.css` and rebuild on changes
+- `npm run admin:create-user` - create a ticket user from the command line
+- `npm run admin:lookup-user` - look up a user by access code
+- `npm run admin:migrate-users` - migrate records from `users.json` into MongoDB
+- `npm run admin:backfill-users` - backfill normalized user fields
+
+## API Overview
+
+The main server exposes these endpoints:
+
+- `GET /api/health`
+- `GET /api/session`
+- `POST /api/logout`
+- `POST /api/ticket/verify`
+- `GET /api/easter-eggs/progress`
+- `POST /api/easter-eggs/unlock`
+- `POST /api/easter-eggs/purchase-unlock`
+- `POST /api/add-gems`
+- `GET /api/leaderboard`
+- `GET /api/user/me`
+- `POST /api/user/profile-pic`
+- `POST /api/user/reset-data`
+
+The server also redirects `/` to `qr-login.html` and serves `storybook.html` directly.
+
+## Data Model
+
+The `TicketUser` model stores:
+
+- Name, roll number, class section, and access code
+- Normalized lookup fields
+- Username and profile picture
+- Easter egg progress and gem balance
+- One-time reward tracking
+- A `used` flag for access-code verification
+
+Sessions are stored in `TicketSession` with a TTL so expired sessions are removed automatically.
+
+## Admin Tools
+
+The `admin/` folder contains helper scripts for managing users:
+
+- `create-user.js`
+- `lookup-user.js`
+- `migrate-users.js`
+- `backfill-normalized.js`
+- `fix-null-usernames.js`
+
+There is also a browser-based admin screen in `admin/admin.html`.
+
+## Notes
+
+- `users.json` is used as import data for migration, not as the live runtime database.
+- The app is built around MongoDB persistence, so a working database connection is required for login and gameplay features.
