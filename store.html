@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Store | StoryBook</title>
+
+    <!-- Google Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+
+    
+</head>
+<style>:root {
+    --bg-deep: #0b0710;
+    --bg-card: rgba(25, 20, 30, 0.6);
+    --accent: #f5d2c0;
+    --gem-cyan: #00f2ff;
+    --gold: #ffd700;
+    --text-main: #f5d2c0;
+    --text-dim: rgba(245, 210, 192, 0.6);
+    --glass-border: rgba(245, 210, 192, 0.15);
+    --header-bg: rgba(15, 10, 5, 0.85);
+    --transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--bg-deep);
+    background-image:
+        radial-gradient(circle at 20% 30%, rgba(45, 25, 60, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 80% 70%, rgba(30, 40, 70, 0.15) 0%, transparent 50%);
+    color: var(--text-main);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    line-height: 1.6;
+    overflow-x: hidden;
+}
+
+/* ===== Header Styling ===== */
+header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem 2rem;
+    background: var(--header-bg);
+    border-bottom: 1px solid var(--glass-border);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+.logo {
+    font-family: 'Cinzel', serif;
+    font-size: 1.2rem;
+    letter-spacing: 4px;
+    color: var(--accent);
+    text-decoration: none;
+    text-transform: uppercase;
+    font-weight: 700;
+    text-shadow: 0 0 15px rgba(245, 210, 192, 0.3);
+}
+
+.gem-counter {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 1rem;
+    background: rgba(0, 242, 255, 0.05);
+    border: 1px solid rgba(0, 242, 255, 0.2);
+    border-radius: 999px;
+    transition: var(--transition);
+}
+
+.gem-counter:hover {
+    background: rgba(0, 242, 255, 0.1);
+    border-color: rgba(0, 242, 255, 0.4);
+    transform: translateY(-1px);
+}
+
+.gem-icon {
+    width: 20px;
+    height: 20px;
+    color: var(--gem-cyan);
+    filter: drop-shadow(0 0 8px rgba(0, 242, 255, 0.6));
+}
+
+.gem-count {
+    font-family: 'Cinzel', serif;
+    font-size: 0.9rem;
+    color: var(--gem-cyan);
+    letter-spacing: 1px;
+    text-shadow: 0 0 10px rgba(0, 242, 255, 0.4);
+}
+
+/* ===== Main Content ===== */
+main {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 8rem 2rem 4rem;
+}
+
+.section-header {
+    margin-bottom: 3rem;
+    text-align: center;
+}
+
+.section-title {
+    font-family: 'Cinzel', serif;
+    font-size: 2.5rem;
+    font-weight: 900;
+    letter-spacing: 8px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 1rem;
+    position: relative;
+    display: inline-block;
+}
+
+.section-title::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+}
+
+.section-subtitle {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.1rem;
+    font-style: italic;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+}
+
+/* ===== Grid Layouts ===== */
+.primary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2.5rem;
+    margin-bottom: 5rem;
+}
+
+.secondary-layout {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr;
+    gap: 3rem;
+}
+
+@media (max-width: 1024px) {
+    .secondary-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ===== Card Styling ===== */
+.card {
+    background: var(--bg-card);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    overflow: hidden;
+    transition: var(--transition);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.card:hover {
+    transform: translateY(-10px);
+    border-color: rgba(245, 210, 192, 0.4);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    background: rgba(35, 30, 45, 0.7);
+}
+
+.card-image-wrap {
+    height: 240px;
+    overflow: hidden;
+    position: relative;
+}
+
+.card-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: var(--transition);
+}
+
+.card:hover .card-image {
+    transform: scale(1.08);
+}
+
+.badge {
+    position: absolute;
+    top: 1.25rem;
+    right: 1.25rem;
+    background: var(--gold);
+    color: #111;
+    padding: 0.4rem 1rem;
+    font-family: 'Cinzel', serif;
+    font-size: 0.7rem;
+    font-weight: 900;
+    letter-spacing: 1px;
+    border-radius: 4px;
+    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+}
+
+.card-content {
+    padding: 2rem;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.card-title {
+    font-family: 'Cinzel', serif;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 0.75rem;
+    letter-spacing: 1px;
+}
+
+.card-description {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.05rem;
+    color: var(--text-dim);
+    margin-bottom: 2rem;
+    line-height: 1.5;
+}
+
+.card-footer {
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(245, 210, 192, 0.1);
+}
+
+.price {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    color: var(--gem-cyan);
+    font-size: 1.1rem;
+}
+
+/* ===== Buttons ===== */
+.btn {
+    padding: 0.75rem 1.75rem;
+    border-radius: 12px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: var(--transition);
+    border: 1px solid transparent;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #2a5a7a 0%, #153a5a 100%);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 15px rgba(42, 90, 122, 0.3);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(42, 90, 122, 0.5);
+    background: linear-gradient(135deg, #3a6a8a 0%, #254a6a 100%);
+}
+
+.btn-outline {
+    background: rgba(245, 210, 192, 0.05);
+    border-color: rgba(245, 210, 192, 0.2);
+    color: var(--accent);
+}
+
+.btn-outline:hover {
+    background: rgba(245, 210, 192, 0.15);
+    border-color: rgba(245, 210, 192, 0.5);
+    transform: translateY(-2px);
+}
+
+/* ===== Boosters Section ===== */
+.booster-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.booster-item {
+    display: flex;
+    align-items: center;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 20px;
+    transition: var(--transition);
+}
+
+.booster-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(245, 210, 192, 0.2);
+    transform: translateX(10px);
+}
+
+.booster-icon-box {
+    width: 80px;
+    height: 80px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(245, 210, 192, 0.1);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1.5rem;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.booster-icon {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.booster-info {
+    flex-grow: 1;
+}
+
+.booster-title {
+    font-family: 'Cinzel', serif;
+    font-size: 1.1rem;
+    color: #fff;
+    margin-bottom: 0.25rem;
+}
+
+.booster-desc {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 0.95rem;
+    color: var(--text-dim);
+}
+
+.booster-action {
+    text-align: right;
+    margin-left: 1.5rem;
+}
+
+/* ===== Exchanges Section ===== */
+.exchange-box {
+    background: linear-gradient(160deg, rgba(40, 30, 60, 0.4) 0%, rgba(20, 15, 30, 0.4) 100%);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    padding: 2.5rem;
+    text-align: center;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.exchange-images {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+}
+
+.exchange-svg {
+    height: 60px;
+    width: 60px;
+    object-fit: contain;
+    transition: var(--transition);
+}
+
+.exchange-svg:hover {
+    transform: scale(1.1) rotate(5deg);
+}
+
+.exchange-rate {
+    font-family: 'Cinzel', serif;
+    font-size: 1.25rem;
+    color: var(--gold);
+    margin-bottom: 0.5rem;
+}
+
+.exchange-note {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1rem;
+    color: var(--text-dim);
+    font-style: italic;
+}
+
+/* ===== Subtitle Decoration ===== */
+.sub-header {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(245, 210, 192, 0.1);
+}
+
+.sub-title {
+    font-family: 'Cinzel', serif;
+    font-size: 1.75rem;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--accent);
+}
+
+.quantity-selector {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-top: 2rem;
+    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.qty-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: rgba(245, 210, 192, 0.1);
+    border: 1px solid rgba(245, 210, 192, 0.2);
+    color: var(--accent);
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.qty-btn:hover {
+    background: rgba(245, 210, 192, 0.2);
+    transform: scale(1.1);
+}
+
+.qty-display {
+    font-family: 'Cinzel', serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--gem-cyan);
+    min-width: 60px;
+    text-shadow: 0 0 10px rgba(0, 242, 255, 0.3);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-deep);
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(245, 210, 192, 0.2);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(245, 210, 192, 0.4);
+}</style>
+<body>
+
+    <!-- Header -->
+    <header id="storyHeader"
+        class="fixed top-0 left-0 right-0 z-[150] flex items-center px-3 sm:px-5 py-3 sm:py-4 transition-all duration-500"
+        style="background: rgba(15, 10, 5, 0.85); border-bottom: 1px solid rgba(245, 210, 192, 0.2); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);">
+        <!-- Easter Egg Counter (left) -->
+        <div id="eggCounter" class="flex items-center gap-2" title="Easter Eggs Found">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                style="width:20px;height:20px;color:#f5d2c0;filter:drop-shadow(0 0 6px rgba(255,180,100,0.55));">
+                <path d="M12 2C8.686 2 5 6.477 5 11.5 5 16.747 8.134 22 12 22s7-5.253 7-10.5C19 6.477 15.314 2 12 2z" />
+            </svg>
+            <span id="eggCountText"
+                class="font-cinzel text-[0.75rem] sm:text-[0.82rem] tracking-widest sm:tracking-[2px]"
+                style="color:#f5d2c0;text-shadow:0 0 10px rgba(255,180,100,0.5);">
+                — / —
+            </span>
+        </div>
+
+
+
+        <!-- Gem Counter (right) -->
+        <div id="gemCounter" class="flex items-center gap-2" title="Gems Collected">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                style="width:20px;height:20px;color:#00f2ff;filter:drop-shadow(0 0 6px rgba(0,242,255,0.6));">
+                <path d="M12 2L4.5 9L12 22L19.5 9L12 2Z" />
+            </svg>
+            <span id="gemCountText" class="font-cinzel text-[0.75rem] sm:text-[0.82rem]"
+                style="letter-spacing:1px;color:#00f2ff;text-shadow:0 0 10px rgba(0,242,255,0.5);">
+                0
+            </span>
+        </div>
+
+    </header>
+
+
+    <main>
+        <div class="section-header">
+            <h1 class="section-title">Mystic Emporium</h1>
+            <p class="section-subtitle">Unlock the secrets of the castle with rare artifacts and boosters.</p>
+        </div>
+
+        <div class="primary-grid">
+            <!-- Hint Card -->
+            <div class="card">
+                <div class="card-image-wrap">
+                    <img src="https://www.figma.com/api/mcp/asset/c720dc65-bf8b-406c-939c-e15f1a5de2dd"
+                        alt="Easter Egg Hint" class="card-image" />
+                </div>
+                <div class="card-content">
+                    <h3 class="card-title">Ancient Revelation</h3>
+                    <p class="card-description">Are you weary from your search? This cryptic scroll reveals the location
+                        of two hidden Easter eggs. Use your intuition wisely.</p>
+                    <div class="card-footer">
+                        <div class="price">
+                            <span>&#x2666;</span> 450
+                        </div>
+                        <button class="btn btn-primary">Purchase</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Golden Username Card -->
+            <div class="card">
+                <div class="card-image-wrap">
+                    <img src="https://www.figma.com/api/mcp/asset/122648d2-0794-422e-98f2-9d9b9b7ac6ee"
+                        alt="Golden Username" class="card-image" />
+                </div>
+                <div class="card-content">
+                    <h3 class="card-title">Midas Touch</h3>
+                    <p class="card-description">Ascend the Hall of Fame with a name forged in pure gold. Distinguish
+                        yourself among the seekers of the realm.</p>
+                    <div class="card-footer">
+                        <div class="price">
+                            <span>&#x2666;</span> 600
+                        </div>
+                        <button class="btn btn-primary">Purchase</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Early Access Card -->
+            <div class="card">
+                <div class="card-image-wrap">
+                    <div class="badge">NEW CHAPTER</div>
+                    <img src="https://www.figma.com/api/mcp/asset/6b6fa131-ce2d-440b-81c4-311e08b80c5a"
+                        alt="Part 2 Access" class="card-image" style="filter: saturate(0.5) contrast(1.1);" />
+                </div>
+                <div class="card-content">
+                    <h3 class="card-title">Chrono Key</h3>
+                    <p class="card-description">The future calls to those who dare. Gain early entry to the second part
+                        of the saga and witness the shadows before they fall.</p>
+                    <div class="card-footer">
+                        <div class="price">
+                            <span>&#x2666;</span> 200
+                        </div>
+                        <button class="btn btn-primary">Purchase</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="secondary-layout">
+            <!-- Boosters Column -->
+            <div>
+                <div class="sub-header">
+                    <h2 class="sub-title">Boosters</h2>
+                    <div class="line"></div>
+                </div>
+
+                <div class="booster-list">
+                    <div class="booster-item">
+                        <div class="booster-icon-box">
+                            <img src="https://www.figma.com/api/mcp/asset/09dc9340-50c2-472e-8010-c686430102e0"
+                                alt="Music" class="booster-icon" />
+                        </div>
+                        <div class="booster-info">
+                            <h4 class="booster-title">Serene Melodies</h4>
+                            <p class="booster-desc">Unlock soothing background music to aid your concentration.</p>
+                        </div>
+                        <div class="booster-action">
+                            <div class="price" style="font-size: 0.9rem; margin-bottom: 0.5rem;"><span>&#x2666;</span>
+                                75</div>
+                            <button class="btn btn-outline"
+                                style="padding: 0.5rem 1rem; font-size: 0.7rem;">Invoke</button>
+                        </div>
+                    </div>
+
+                    <div class="booster-item">
+                        <div class="booster-icon-box">
+                            <img src="https://www.figma.com/api/mcp/asset/9a527d28-2216-4f6f-965b-1c92b739469b"
+                                alt="Potion" class="booster-icon" />
+                        </div>
+                        <div class="booster-info">
+                            <h4 class="booster-title">Crimson Elixir</h4>
+                            <p class="booster-desc">Harness the power of the blood moon to reveal hidden text scripts.
+                            </p>
+                        </div>
+                        <div class="booster-action">
+                            <div class="price" style="font-size: 0.9rem; margin-bottom: 0.5rem;"><span>&#x2666;</span>
+                                120</div>
+                            <button class="btn btn-outline"
+                                style="padding: 0.5rem 1rem; font-size: 0.7rem;">Invoke</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Exchange Column -->
+            <div>
+                <div class="sub-header">
+                    <h2 class="sub-title">Currency</h2>
+                    <div class="line"></div>
+                </div>
+
+                <div class="exchange-box">
+                    <div class="exchange-images">
+                        <!-- Gem SVG -->
+                        <svg class="exchange-svg" viewBox="0 0 24 24" fill="currentColor"
+                            style="color: var(--gem-cyan); filter: drop-shadow(0 0 10px rgba(0,242,255,0.4));">
+                            <path d="M12 2L4.5 9L12 22L19.5 9L12 2Z" />
+                        </svg>
+
+                        <!-- Arrow SVG -->
+                        <svg class="exchange-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            style="color: var(--accent); opacity: 0.5; width: 40px;">
+                            <path d="M5 12h14m-7-7l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+
+                        <!-- Coin SVG -->
+                        <svg class="exchange-svg" viewBox="0 0 24 24"
+                            style="filter: drop-shadow(0 0 10px rgba(255,215,0,0.3));">
+                            <circle cx="12" cy="12" r="10" fill="var(--gold)" />
+                            <circle cx="12" cy="12" r="8" fill="none" stroke="rgba(0,0,0,0.15)" stroke-width="1" />
+                            <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle"
+                                font-family="Cinzel, serif" font-weight="900" font-size="12"
+                                fill="rgba(0,0,0,0.6)">C</text>
+                        </svg>
+
+                    </div>
+                    <div class="exchange-rate">100 Gems = 100,000 Coins</div>
+                    <p class="exchange-note">Convert your hard-earned gems into coins to acquire future specialized
+                        tools.</p>
+                    <div class="quantity-selector">
+                        <button class="qty-btn" title="Decrease by 10">-</button>
+                        <div class="qty-display">100</div>
+                        <button class="qty-btn" title="Increase by 10">+</button>
+                    </div>
+
+                    <button class="btn btn-primary" style="margin-top: 2rem; width: 100%;">Exchange All</button>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+</body>
+
+</html>
