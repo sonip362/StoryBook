@@ -1120,7 +1120,7 @@ async function checkMorseAnswer() {
     const result = await addGems(100, 'morse_quiz_reward');
 
     if (result.success) {
-      feedback.textContent = 'Correct!';
+      feedback.textContent = 'Correct! You earned exactly 100 gems! 🎉';
     } else if (result.alreadyClaimed) {
       feedback.textContent = 'You have already claimed this reward!';
       feedback.style.color = '#ff8800';
@@ -1770,13 +1770,6 @@ if (resetDataBtn) {
         const data = await res.json();
 
         if (data.ok) {
-          // Clear all local storage except the authentication token
-          const token = localStorage.getItem('sb_token');
-          localStorage.clear();
-          if (token) {
-            localStorage.setItem('sb_token', token);
-          }
-
           showEggToast("Progress Reset Successful");
           // Refresh the page to reset all states or manually update
           setTimeout(() => {

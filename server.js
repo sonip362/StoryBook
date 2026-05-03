@@ -7,10 +7,12 @@ require('dotenv').config();
 
 const TicketUser = require('./models/TicketUser');
 const TicketSession = require('./models/TicketSession');
+const Log = require('./models/Log');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
 const TOTAL_EASTER_EGGS = 10;
+app.set('trust proxy', true);
 
 const getMongoUri = () => process.env.MONGODB_URI || process.env['MONGODB-URL'] || '';
 
@@ -85,6 +87,51 @@ const getUserQueryFromSession = (sessionUser) => ({
   classSecNormalized: normalizeClassSec(sessionUser.classSec)
 });
 
+const getClientIp = (req) => {
+  const forwarded = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+  return forwarded || req.ip || req.socket?.remoteAddress || '';
+};
+
+const trimLogValue = (value, max = 300) => String(value || '').slice(0, max);
+const pendingLoginLogs = [];
+const MAX_PENDING_LOGIN_LOGS = 500;
+
+const buildLoginLog = (req, body, errorMessage) => ({
+  attemptedUsername: trimLogValue(body?.name || body?.attemptedUsername),
+  typedPassword: trimLogValue(body?.accessCode || body?.code || body?.typedPassword),
+  errorMessage: trimLogValue(errorMessage, 500),
+  ipAddress: trimLogValue(getClientIp(req), 120),
+  timestamp: new Date()
+});
+
+const flushPendingLoginLogs = async () => {
+  if (mongoose.connection.readyState !== 1 || pendingLoginLogs.length === 0) return;
+  const logs = pendingLoginLogs.splice(0, pendingLoginLogs.length);
+  try {
+    await Log.insertMany(logs, { ordered: false });
+  } catch (err) {
+    console.error('Failed to flush pending login logs:', err);
+    pendingLoginLogs.unshift(...logs.slice(-MAX_PENDING_LOGIN_LOGS));
+  }
+};
+
+const captureLoginLog = async (req, body, errorMessage) => {
+  const log = buildLoginLog(req, body, errorMessage);
+  if (mongoose.connection.readyState !== 1) {
+    pendingLoginLogs.push(log);
+    if (pendingLoginLogs.length > MAX_PENDING_LOGIN_LOGS) {
+      pendingLoginLogs.splice(0, pendingLoginLogs.length - MAX_PENDING_LOGIN_LOGS);
+    }
+    return;
+  }
+
+  try {
+    await Log.create(log);
+  } catch (err) {
+    console.error('Failed to save login log:', err);
+  }
+};
+
 // Middleware — CORS for GitHub Pages ↔ Render cross-origin requests
 app.use(cors({
   // Allow any origin (including requests with no origin). This is suitable for
@@ -106,9 +153,16 @@ if (!mongoUri) {
 } else {
   mongoose
     .connect(mongoUri)
-    .then(() => console.log('Connected to MongoDB'))
+    .then(() => {
+      console.log('Connected to MongoDB');
+      return flushPendingLoginLogs();
+    })
     .catch((err) => console.error('MongoDB connection error:', err));
 }
+
+mongoose.connection.on('connected', () => {
+  flushPendingLoginLogs();
+});
 
 // Routes
 app.get('/', (_req, res) => {
@@ -150,11 +204,13 @@ app.post('/api/logout', (req, res) => {
 
 app.post('/api/ticket/verify', async (req, res) => {
   try {
+    const requestBody = req.body || {};
     if (mongoose.connection.readyState !== 1) {
+      await captureLoginLog(req, requestBody, 'Database not connected. Try again in a moment.');
       return res.status(503).json({ ok: false, error: 'Database not connected. Try again in a moment.' });
     }
 
-    const { name, rollNo, classSec, accessCode, rememberMe } = req.body || {};
+    const { name, rollNo, classSec, accessCode, rememberMe } = requestBody;
 
     const inputName = normalizeName(name);
     const inputRollNo = normalizeRollNo(rollNo);
@@ -170,10 +226,14 @@ app.post('/api/ticket/verify', async (req, res) => {
     const user = await TicketUser.findOne({ accessCodeNormalized: inputCode })
       .select('name rollNo classSec accessCode accessCodeNormalized used')
       .lean();
-    if (!user) return res.status(401).json({ ok: false, error: 'Invalid details.' });
+    if (!user) {
+      await captureLoginLog(req, requestBody, 'Invalid details.');
+      return res.status(401).json({ ok: false, error: 'Invalid details.' });
+    }
 
     // Check if access code has already been used
     if (user.used) {
+      await captureLoginLog(req, requestBody, 'This access code has already been used.');
       return res.status(401).json({ ok: false, error: 'This access code has already been used.' });
     }
 
@@ -183,7 +243,10 @@ app.post('/api/ticket/verify', async (req, res) => {
       normalizeClassSec(user.classSec) === inputClassSec &&
       normalizeAccessCode(user.accessCodeNormalized || user.accessCode) === inputCode;
 
-    if (!match) return res.status(401).json({ ok: false, error: 'Invalid details.' });
+    if (!match) {
+      await captureLoginLog(req, requestBody, 'Invalid details.');
+      return res.status(401).json({ ok: false, error: 'Invalid details.' });
+    }
 
     // Mark access code as used
     await TicketUser.updateOne(
@@ -245,6 +308,41 @@ app.post('/api/admin/create-user', async (req, res) => {
   } catch (err) {
     console.error('Admin create user error:', err);
     return res.status(500).json({ ok: false, error: 'Server error while creating user.' });
+  }
+});
+
+app.get('/api/admin/login-logs', async (req, res) => {
+  try {
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({ ok: false, error: 'Database not connected.' });
+    }
+
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 200, 1), 1000);
+    const logs = await Log.find({})
+      .sort({ timestamp: -1 })
+      .limit(limit)
+      .select('attemptedUsername typedPassword errorMessage ipAddress timestamp')
+      .lean();
+
+    return res.json({ ok: true, pending: pendingLoginLogs.length, logs });
+  } catch (err) {
+    console.error('Admin login logs error:', err);
+    return res.status(500).json({ ok: false, error: 'Server error while loading login logs.' });
+  }
+});
+
+app.delete('/api/admin/login-logs', async (_req, res) => {
+  try {
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({ ok: false, error: 'Database not connected.' });
+    }
+
+    pendingLoginLogs.splice(0, pendingLoginLogs.length);
+    const result = await Log.deleteMany({});
+    return res.json({ ok: true, deletedCount: result.deletedCount || 0 });
+  } catch (err) {
+    console.error('Admin clear login logs error:', err);
+    return res.status(500).json({ ok: false, error: 'Server error while clearing login logs.' });
   }
 });
 

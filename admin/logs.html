@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Login Logs</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Cormorant+Garamond:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="../dist/output.css" rel="stylesheet">
+    <script>
+        if (!sessionStorage.getItem('admin_access')) {
+            window.location.href = 'secret-code.html';
+        }
+    </script>
+    <style>
+        body {
+            background: radial-gradient(circle at center, #1a0505 0%, #05050a 100%);
+            min-height: 100vh;
+            font-family: 'Cormorant Garamond', serif;
+            color: #f8e7e7;
+        }
+        .page-shell {
+            width: min(1180px, calc(100% - 2rem));
+            margin: 0 auto;
+            padding: 2rem 0;
+        }
+        .panel {
+            background: rgba(10, 10, 15, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 120, 120, 0.2);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+            border-radius: 1rem;
+            overflow: hidden;
+        }
+        .toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid rgba(255, 120, 120, 0.18);
+        }
+        .title {
+            font-family: 'Cinzel', serif;
+            letter-spacing: 0.1em;
+            color: #ffdbdb;
+            text-shadow: 0 0 15px rgba(255, 120, 120, 0.4);
+        }
+        .btn {
+            background: linear-gradient(135deg, #4a0404 0%, #8b0000 100%);
+            color: #fff;
+            font-family: 'Cinzel', serif;
+            font-size: 0.8rem;
+            font-weight: 700;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid rgba(255, 120, 120, 0.3);
+            cursor: pointer;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+        .btn.secondary {
+            background: rgba(255, 255, 255, 0.06);
+            text-decoration: none;
+        }
+        .btn.danger {
+            background: linear-gradient(135deg, #3b0606 0%, #b91c1c 100%);
+        }
+        .status {
+            min-height: 1.5rem;
+            padding: 0.75rem 1.25rem 0;
+            color: #fca5a5;
+            font-size: 1rem;
+        }
+        .table-wrap {
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 820px;
+        }
+        th,
+        td {
+            padding: 0.85rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 120, 120, 0.12);
+            vertical-align: top;
+        }
+        th {
+            font-family: 'Cinzel', serif;
+            color: #fecaca;
+            font-size: 0.75rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            background: rgba(255, 255, 255, 0.04);
+        }
+        td {
+            color: #f8e7e7;
+            font-size: 1rem;
+        }
+        .muted {
+            color: rgba(248, 231, 231, 0.62);
+        }
+        .mono {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 0.9rem;
+        }
+        @media (max-width: 700px) {
+            .toolbar {
+                align-items: stretch;
+                flex-direction: column;
+            }
+            .toolbar-actions {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 0.75rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="page-shell">
+        <section class="panel">
+            <div class="toolbar">
+                <div>
+                    <h1 class="title text-2xl md:text-3xl font-bold">Login Logs</h1>
+                    <p class="muted mt-1">Failed QR login attempts captured by the server.</p>
+                </div>
+                <div class="toolbar-actions">
+                    <a href="admin.html" class="btn secondary">Back</a>
+                    <button id="clearBtn" class="btn danger" type="button">Clear All Logs</button>
+                    <button id="refreshBtn" class="btn" type="button">Refresh</button>
+                </div>
+            </div>
+            <div id="status" class="status">Loading logs...</div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Attempted Username</th>
+                            <th>Typed Password</th>
+                            <th>Error</th>
+                            <th>IP Address</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logsBody"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const statusEl = document.getElementById('status');
+        const logsBody = document.getElementById('logsBody');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const clearBtn = document.getElementById('clearBtn');
+
+        const escapeHtml = (value) => String(value || '')
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#039;');
+
+        const formatDate = (value) => {
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) return 'Unknown';
+            return date.toLocaleString();
+        };
+
+        const renderLogs = (logs) => {
+            if (!Array.isArray(logs) || logs.length === 0) {
+                logsBody.innerHTML = '<tr><td colspan="5" class="muted">No failed login logs found.</td></tr>';
+                return;
+            }
+
+            logsBody.innerHTML = logs.map((log) => `
+                <tr>
+                    <td class="mono">${escapeHtml(formatDate(log.timestamp))}</td>
+                    <td>${escapeHtml(log.attemptedUsername)}</td>
+                    <td class="mono">${escapeHtml(log.typedPassword)}</td>
+                    <td>${escapeHtml(log.errorMessage)}</td>
+                    <td class="mono">${escapeHtml(log.ipAddress)}</td>
+                </tr>
+            `).join('');
+        };
+
+        const loadLogs = async () => {
+            statusEl.textContent = 'Loading logs...';
+            refreshBtn.disabled = true;
+            clearBtn.disabled = true;
+            try {
+                const response = await fetch('/api/admin/login-logs?limit=500', { cache: 'no-store' });
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok || !data.ok) {
+                    throw new Error(data.error || 'Failed to load logs.');
+                }
+                renderLogs(data.logs);
+                statusEl.textContent = data.pending
+                    ? `${data.logs.length} logs loaded. ${data.pending} disconnected-database logs are waiting to sync.`
+                    : `${data.logs.length} logs loaded.`;
+            } catch (err) {
+                logsBody.innerHTML = '<tr><td colspan="5" class="muted">Could not load logs.</td></tr>';
+                statusEl.textContent = err.message || 'Could not load logs.';
+            } finally {
+                refreshBtn.disabled = false;
+                clearBtn.disabled = false;
+            }
+        };
+
+        const clearLogs = async () => {
+            const confirmed = window.confirm('Clear all login logs permanently?');
+            if (!confirmed) return;
+
+            statusEl.textContent = 'Clearing logs...';
+            refreshBtn.disabled = true;
+            clearBtn.disabled = true;
+            try {
+                const response = await fetch('/api/admin/login-logs', { method: 'DELETE' });
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok || !data.ok) {
+                    throw new Error(data.error || 'Failed to clear logs.');
+                }
+                renderLogs([]);
+                statusEl.textContent = `${data.deletedCount || 0} logs cleared.`;
+            } catch (err) {
+                statusEl.textContent = err.message || 'Could not clear logs.';
+            } finally {
+                refreshBtn.disabled = false;
+                clearBtn.disabled = false;
+            }
+        };
+
+        refreshBtn.addEventListener('click', loadLogs);
+        clearBtn.addEventListener('click', clearLogs);
+        loadLogs();
+    </script>
+</body>
+</html>
